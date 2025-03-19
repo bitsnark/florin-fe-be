@@ -62,7 +62,7 @@ export class BlockScanner {
         const highest = await this.getLatestBlockNumber();
 
         // Get all non-final blocks that are past maturity
-        const blocks = (await this.blockDb.getNonFinalBlocks())
+        const blocks = (await this.blockDb.getBlocksByFinality(Finality.UNKNOWN))
             .filter(block => block.blockNumber + config.finalityBlocks < highest);
 
         // Map them according to height and check if they exist in the node
@@ -89,7 +89,7 @@ export class BlockScanner {
                 throw new Error(`No final blocks for height: ${blockNumber}`);
             }
             if (final != 1) {
-                throw new Error(`More than one final blocks for height: ${blockNumber}`);
+                throw new Error(`More than one final block for height: ${blockNumber}`);
             }
         }
 

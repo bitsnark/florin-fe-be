@@ -14,7 +14,7 @@ export class EventParser {
             blockNumber: 0,
             blockHash: "",
             positionId: "",
-            status: PositionStatus.NONE,
+            status: PositionStatus.ACTIVE,
             ownerAddress: "",
             tokenAddress: "",
             originalAmount: 0n,

@@ -30,7 +30,7 @@ export class BlockDb extends Db {
     await this.pool.query(query, [blockHash, finality]);
   }
 
-  async getNonFinalBlocks(): Promise<Block[]> {
+  async getBlocksByFinality(finality: Finality): Promise<Block[]> {
     const query = `SELECT * FROM blocks WHERE finality = $1`;
     const result = await this.pool.query(query, [Finality.UNKNOWN]);
     return result.rows.map(row => ({
