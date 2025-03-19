@@ -1,0 +1,27 @@
+import { describe, expect, test } from '@jest/globals';
+import { BlockDb } from '../src/db/block-db';
+import { Finality } from '../src/common/types';
+
+describe('Block DB', () => {
+
+    const db = new BlockDb();
+
+    const fakeBlock = {
+        blockHash: '0x1234',
+        blockNumber: 1,
+        finality: Finality.UNKNOWN
+    };
+
+    test('create and read', async () => {
+        await db.create(fakeBlock);
+        const block = await db.getByHash(fakeBlock.blockHash);
+        expect(block).toEqual(block);
+    });
+
+    test('update finality', async () => {
+        await db.create(fakeBlock);
+        await db.updateFinality(fakeBlock.blockHash, Finality.REVERTED);
+        const block = await db.getByHash(fakeBlock.blockHash);
+        expect(block.finality).toEqual(Finality.REVERTED);
+    });
+});
