@@ -93,7 +93,7 @@ export class BlockScanner {
             }
         }
 
-        // All non-final are reverted
+        // All non-final blocks are reverted
         // Write them to DB
         for (const block of blocks) {
             block.finality = block.finality == Finality.FINAL ? Finality.FINAL : Finality.REVERTED;
