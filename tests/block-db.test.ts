@@ -1,10 +1,15 @@
-import { describe, expect, test } from '@jest/globals';
+import { beforeEach, describe, expect, test } from '@jest/globals';
 import { BlockDb } from '../src/db/block-db';
 import { Finality } from '../src/common/types';
+import { config } from '../src/common/config';
 
 describe('Block DB', () => {
 
-    const db = new BlockDb();
+    let db: BlockDb;
+
+    beforeEach(() => {
+        db = new BlockDb();
+    });
 
     const fakeBlock = {
         blockHash: '0x1234',

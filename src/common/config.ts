@@ -1,17 +1,34 @@
+import { parse } from './env-parser';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: ['.env.test', '.env.local', '.env'] });
 
 export interface IConfig {
 
-    dbUrl: string;
-    blockStart: number,
-    providerUrl: string,
-    chainId: number,
-    contractAddress: string,
-    finalityBlocks: number,
-    loopIntervalMs: number
+    postgresUser: string;
+    postgresHost: string;
+    postgresDatabase: string;
+    postgresPort: number;
+    postgresPassword: string;
+    postgresKeepAlive: boolean;
+
+    blockStart: number;
+    providerUrl: string;
+    chainId: number;
+    contractAddress: string;
+    finalityBlocks: number;
+    loopIntervalMs: number;
 }
 
 export const config: IConfig = {
-    dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:1234@localhost:5432/florin_fe_be',
+
+    postgresUser: parse.string('POSTGRES_USER', 'postgres'),
+    postgresHost: parse.string('POSTGRES_HOST', 'localhost'),
+    postgresPort: parse.integer('POSTGRES_PORT', 5432),
+    postgresDatabase: parse.string('POSTGRES_DATABASE', 'florin_fe_be'),
+    postgresPassword: parse.string('POSTGRES_PASSWORD', '1234'),
+    postgresKeepAlive: parse.boolean('POSTGRES_KEEP_ALIVE', true),
+
     blockStart: 0,
     providerUrl: process.env.ETH_PROVIDER_URL || 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID',
     chainId: 20002,

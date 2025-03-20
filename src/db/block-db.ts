@@ -17,12 +17,12 @@ export class BlockDb extends Db implements IBlockDb {
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (block_hash) DO NOTHING
       `;
-    await this.pool.query(query, [block.blockHash, block.chainId, block.blockNumber, block.finality]);
+    await this.query(query, [block.blockHash, block.chainId, block.blockNumber, block.finality]);
   }
 
   async getByHash(blockHash: string): Promise<Block | null> {
     const query = `SELECT * FROM blocks WHERE block_hash = $1`;
-    const result = await this.pool.query(query, [blockHash]);
+    const result = await this.query<any>(query, [blockHash]);
     if (result.rowCount === 0) return null;
     const row = result.rows[0];
     return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };
@@ -34,7 +34,7 @@ export class BlockDb extends Db implements IBlockDb {
     SET finality = $2
     WHERE block_hash = $1
   `;
-    await this.pool.query(query, [blockHash, finality]);
+    await this.query(query, [blockHash, finality]);
   }
 
   async getBlocksByFinality(chainId: number, finality: Finality): Promise<Block[]> {
@@ -42,7 +42,7 @@ export class BlockDb extends Db implements IBlockDb {
     SELECT * FROM blocks 
     WHERE finality = $1 AND chain_id = $2
     `;
-    const result = await this.pool.query(query, [Finality.UNKNOWN, chainId]);
+    const result = await this.query<any>(query, [Finality.UNKNOWN, chainId]);
     return result.rows.map(row => ({
       blockHash: row.block_hash,
       chainId: row.chain_id,
@@ -57,7 +57,7 @@ export class BlockDb extends Db implements IBlockDb {
     WHERE finality = $1 AND chain_id = $2
     ORDER BY block_number DESC LIMIT 1
     `;
-    const result = await this.pool.query(query, [Finality.FINAL, chainId]);
+    const result = await this.query<any>(query, [Finality.FINAL, chainId]);
     if (result.rowCount === 0) return null;
     const row = result.rows[0];
     return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };

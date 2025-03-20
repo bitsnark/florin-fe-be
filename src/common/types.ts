@@ -29,14 +29,12 @@ export enum PositionState {
     CLOSED = 'CLOSED',
 }
 
-export interface Position {
+export interface PositionCreatedEvent extends EventBase {
     // Unique identifier for this position
     // 32 bytes, hex string
     positionId: string;
 
     chainId: number;
-
-    state: PositionState;
 
     // EVM owner of this position
     // EVM address as hex string
@@ -59,10 +57,14 @@ export interface Position {
     exchangeRate: bigint;
 }
 
-export interface PositionCreatedEvent extends EventBase, Position { }
-
 export interface PositionStateEvent
-    extends EventBase, Pick<Position, 'positionId' | 'state'> { }
+    extends EventBase {
+
+    positionId: string;
+    state: PositionState;
+}
+
+export interface Position extends PositionCreatedEvent, PositionStateEvent { }
 
 export enum ReservationState {
     NONE = 'NONE',
@@ -72,12 +74,10 @@ export enum ReservationState {
     SETTLED = 'SETTLED',
 }
 
-export interface Reservation {
+export interface ReservationCreatedEvent extends EventBase {
     // Unique identifier for this reservation
     // 32 bytes, hex string
     reservationId: string;
-
-    state: ReservationState;
 
     // EVM owner of this reservation
     // EVM address as hex string
@@ -92,7 +92,12 @@ export interface Reservation {
     amount: bigint;
 }
 
-export interface ReservationCreatedEvent extends EventBase, Reservation { }
-
 export interface ReservationStateEvent
-    extends EventBase, Pick<Reservation, 'reservationId' | 'state'> { }
+    extends EventBase {
+    reservationId: string;
+    state: ReservationState;
+}
+
+export interface Reservation extends ReservationCreatedEvent, ReservationStateEvent {
+}
+

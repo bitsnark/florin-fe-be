@@ -23,9 +23,8 @@ CREATE TABLE blocks (
 -- ============================
 CREATE TABLE position_created_events (
     event_id SERIAL PRIMARY KEY,
-    position_id CHAR(66) NOT NULL,      -- Unique identifier for this position
+    position_id CHAR(66) NOT NULL UNIQUE,      -- Unique identifier for this position
     chain_id NUMERIC NOT NULL,
-    state TEXT NOT NULL,
     owner_address CHAR(42) NOT NULL,
     token_address CHAR(42) NOT NULL,
     original_amount NUMERIC NOT NULL,
@@ -53,9 +52,8 @@ CREATE TABLE position_state_events (
 -- ============================
 CREATE TABLE reservation_created_events (
     event_id SERIAL PRIMARY KEY,
-    reservation_id CHAR(66) NOT NULL,
+    reservation_id CHAR(66) NOT NULL UNIQUE,
     owner_address CHAR(42) NOT NULL,
-    state TEXT NOT NULL,
     position_id CHAR(66) NOT NULL,
     amount NUMERIC NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase

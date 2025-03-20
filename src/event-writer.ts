@@ -1,10 +1,6 @@
 import { ethers } from "ethers";
-import { PositionCreatedEventDb } from "./db/position-created-event-db";
-import { PositionState, ReservationState } from "./common/types";
-import { ReservationCreatedEventDb } from "./db/reservation-created-event-db";
-import { PositionStateEventDb } from "./db/position-state-event-db";
-import { ReservationStateEventDb } from "./db/reservation-state-event-db";
 import { config } from "./common/config";
+import { EventsDb } from "./db/events-db";
 
 export interface IEventWriter {
     parseEvent(blockNumber: number, blockHash: string, parsedLog: ethers.LogDescription);
@@ -12,16 +8,18 @@ export interface IEventWriter {
 
 export class EventWriter implements IEventWriter {
 
-    constructor() { }
+    db: EventsDb;
+
+    constructor() {
+        this.db = new EventsDb();
+    }
 
     private async positionCreatedEvent(blockNumber: number, blockHash: string, args: ethers.Result) {
-        const db = new PositionCreatedEventDb();
         let index = 0;
-        await db.create({
+        await this.db.positionCreated({
             chainId: config.chainId,
             blockNumber: blockNumber,
             blockHash: blockHash,
-            state: PositionState.ACTIVE,
 
             positionId: args[index++],
             ownerAddress: args[index++],
@@ -33,9 +31,8 @@ export class EventWriter implements IEventWriter {
     }
 
     private async positionStateEvent(blockNumber: number, blockHash: string, args: ethers.Result) {
-        const db = new PositionStateEventDb();
         let index = 0;
-        await db.create({
+        await this.db.positionStateChanged({
             blockNumber: blockNumber,
             blockHash: blockHash,
 
@@ -46,12 +43,10 @@ export class EventWriter implements IEventWriter {
     }
 
     private async reservationCreatedEvent(blockNumber: number, blockHash: string, args: ethers.Result) {
-        const db = new ReservationCreatedEventDb();
         let index = 0;
-        await db.create({
+        await this.db.reservationCreated({
             blockNumber: blockNumber,
             blockHash: blockHash,
-            state: ReservationState.PENDING,
 
             reservationId: args[index++],
             ownerAddress: args[index++],
@@ -61,9 +56,8 @@ export class EventWriter implements IEventWriter {
     }
 
     private async reservationStateEvent(blockNumber: number, blockHash: string, args: ethers.Result) {
-        const db = new ReservationStateEventDb();
         let index = 0;
-        await db.create({
+        await this.db.reservationStateChanged({
             blockNumber: blockNumber,
             blockHash: blockHash,
 
