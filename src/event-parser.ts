@@ -1,9 +1,9 @@
 import { ethers } from "ethers";
 import { PositionCreatedEventDb } from "./db/position-created-event-db";
-import { PositionStatus, ReservationStatus } from "./common/types";
-import { PositionStatusEventDb } from "./db/position-status-event-db";
+import { PositionState, ReservationState } from "./common/types";
+import { PositionStateEventDb } from "./db/position-state-event-db";
 import { ReservationCreatedEventDb } from "./db/reservation-created-event-db";
-import { ReservationStatusEventDb } from "./db/reservation-status-event-db";
+import { ReservationStateEventDb } from "./db/reservation-state-event-db";
 
 export class EventParser {
 
@@ -14,7 +14,7 @@ export class EventParser {
             blockNumber: 0,
             blockHash: "",
             positionId: "",
-            status: PositionStatus.ACTIVE,
+            state: PositionState.ACTIVE,
             ownerAddress: "",
             tokenAddress: "",
             originalAmount: 0n,
@@ -24,13 +24,13 @@ export class EventParser {
         });
     }
 
-    async PositionStatusEvent(args: ethers.Result) {
-        const db = new PositionStatusEventDb();
+    async PositionStateEvent(args: ethers.Result) {
+        const db = new PositionStateEventDb();
         await db.create({
             blockNumber: 0,
             blockHash: "",
             positionId: "",
-            status: PositionStatus.NONE
+            state: PositionState.NONE
         });
 
     }
@@ -42,20 +42,20 @@ export class EventParser {
             blockHash: "",
             reservationId: "",
             ownerAddress: "",
-            status: ReservationStatus.NONE,
+            state: ReservationState.NONE,
             positionId: "",
             amount: 0n,
             createdAtBlock: 0
         });
     }
 
-    async ReservationStatusEvent(args: ethers.Result) {
-        const db = new ReservationStatusEventDb();
+    async ReservationStateEvent(args: ethers.Result) {
+        const db = new ReservationStateEventDb();
         await db.create({
             blockNumber: 0,
             blockHash: "",
             reservationId: "",
-            status: ReservationStatus.NONE
+            state: ReservationState.NONE
         });
     }
 

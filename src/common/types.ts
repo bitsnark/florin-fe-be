@@ -22,7 +22,7 @@ export interface EventBase {
     blockHash: string; // hex string
 }
 
-export enum PositionStatus {
+export enum PositionState {
     NONE = 'NONE',
     ACTIVE = 'ACTIVE',
     PAUSED = 'PAUSED',
@@ -36,7 +36,7 @@ export interface Position {
 
     chainId: number;
 
-    status: PositionStatus;
+    state: PositionState;
 
     // EVM owner of this position
     // EVM address as hex string
@@ -61,10 +61,10 @@ export interface Position {
 
 export interface PositionCreatedEvent extends EventBase, Position { }
 
-export interface PositionStatusEvent
-    extends EventBase, Pick<Position, 'positionId' | 'status'> { }
+export interface PositionStateEvent
+    extends EventBase, Pick<Position, 'positionId' | 'state'> { }
 
-export enum ReservationStatus {
+export enum ReservationState {
     NONE = 'NONE',
     PENDING = 'PENDING',
     EXPIRED = 'EXPIRED',
@@ -77,7 +77,7 @@ export interface Reservation {
     // 32 bytes, hex string
     reservationId: string;
 
-    status: ReservationStatus;
+    state: ReservationState;
 
     // EVM owner of this reservation
     // EVM address as hex string
@@ -97,5 +97,5 @@ export interface Reservation {
 
 export interface ReservationCreatedEvent extends EventBase, Reservation { }
 
-export interface ReservationStatusEvent
-    extends EventBase, Pick<Reservation, 'reservationId' | 'status'> { }
+export interface ReservationStateEvent
+    extends EventBase, Pick<Reservation, 'reservationId' | 'state'> { }

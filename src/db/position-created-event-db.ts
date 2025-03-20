@@ -6,14 +6,14 @@ export class PositionCreatedEventDb extends Db {
   async create(event: Exclude<PositionCreatedEvent, 'eventId'>): Promise<void> {
     const query = `
         INSERT INTO position_created_events
-        (position_id, chain_id, status, owner_address, token_address, original_amount, bitcoin_address, exchange_rate, block_number, block_hash)
+        (position_id, chain_id, state, owner_address, token_address, original_amount, bitcoin_address, exchange_rate, block_number, block_hash)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         ON CONFLICT (position_id) DO NOTHING
       `;
     await this.pool.query(query, [
       event.positionId,
       event.chainId,
-      event.status,
+      event.state,
       event.ownerAddress,
       event.tokenAddress,
       event.originalAmount,
@@ -33,7 +33,7 @@ export class PositionCreatedEventDb extends Db {
       eventId: row.event_id,
       positionId: row.position_id,
       chainId: row.chain_id,
-      status: row.status,
+      state: row.state,
       ownerAddress: row.owner_address,
       tokenAddress: row.token_address,
       originalAmount: row.original_amount,
