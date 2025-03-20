@@ -8,6 +8,7 @@ describe('Block DB', () => {
 
     const fakeBlock = {
         blockHash: '0x1234',
+        chainId: 20002,
         blockNumber: 1,
         finality: Finality.UNKNOWN
     };

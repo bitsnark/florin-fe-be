@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS blocks;
 -- ============================
 CREATE TABLE blocks (
     block_hash CHAR(66) PRIMARY KEY,  -- Unique id, hex string (32 bytes with 0x prefix)
+    chain_id NUMERIC NOT NULL,
     block_number INTEGER NOT NULL,
     finality TEXT NOT NULL            -- Finality status: 'UNKNOWN', 'FINAL', 'REVERTED'
 );

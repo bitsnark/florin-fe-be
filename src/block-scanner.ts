@@ -33,7 +33,7 @@ export class BlockScanner {
     async processNewBlocks() {
 
         let blockStart = config.blockStart;
-        const highest = await this.blockDb.getHighestFinalBlock();
+        const highest = await this.blockDb.getHighestFinalBlock(config.chainId);
         if (highest) blockStart = highest.blockNumber + 1;
         const blockEnd = await this.getLatestBlockNumber();
 
@@ -52,6 +52,7 @@ export class BlockScanner {
 
             await this.blockDb.create({
                 blockHash: evmBlock.hash,
+                chainId: config.chainId,
                 blockNumber: blockNumber,
                 finality: Finality.UNKNOWN
             });
@@ -62,7 +63,7 @@ export class BlockScanner {
         const highest = await this.getLatestBlockNumber();
 
         // Get all non-final blocks that are past maturity
-        const blocks = (await this.blockDb.getBlocksByFinality(Finality.UNKNOWN))
+        const blocks = (await this.blockDb.getBlocksByFinality(config.chainId, Finality.UNKNOWN))
             .filter(block => block.blockNumber + config.finalityBlocks < highest);
 
         // Map them according to height and check if they exist in the node

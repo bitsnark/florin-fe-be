@@ -5,12 +5,11 @@ export class BlockDb extends Db {
 
   async create(block: Block): Promise<void> {
     const query = `
-        INSERT INTO blocks (block_hash, block_number, finality)
-        VALUES ($1, $2, $3)
+        INSERT INTO blocks (block_hash, chain_id, block_number, finality)
+        VALUES ($1, $2, $3, $4)
         ON CONFLICT (block_hash) DO NOTHING
       `;
-    await this.pool.query(query, [block.blockHash, block.blockNumber, block.finality]);
-    this.pool
+    await this.pool.query(query, [block.blockHash, block.chainId, block.blockNumber, block.finality]);
   }
 
   async getByHash(blockHash: string): Promise<Block | null> {
@@ -18,7 +17,7 @@ export class BlockDb extends Db {
     const result = await this.pool.query(query, [blockHash]);
     if (result.rowCount === 0) return null;
     const row = result.rows[0];
-    return { blockHash: row.block_hash, blockNumber: row.block_number, finality: row.finality };
+    return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };
   }
 
   async updateFinality(blockHash: string, finality: Finality) {
@@ -30,21 +29,29 @@ export class BlockDb extends Db {
     await this.pool.query(query, [blockHash, finality]);
   }
 
-  async getBlocksByFinality(finality: Finality): Promise<Block[]> {
-    const query = `SELECT * FROM blocks WHERE finality = $1`;
-    const result = await this.pool.query(query, [Finality.UNKNOWN]);
+  async getBlocksByFinality(chainId: number, finality: Finality): Promise<Block[]> {
+    const query = `
+    SELECT * FROM blocks 
+    WHERE finality = $1 AND chain_id = $2
+    `;
+    const result = await this.pool.query(query, [Finality.UNKNOWN, chainId]);
     return result.rows.map(row => ({
       blockHash: row.block_hash,
+      chainId: row.chain_id,
       blockNumber: row.block_number,
       finality: row.finality
     }));
   }
 
-  async getHighestFinalBlock(): Promise<Block> {
-    const query = `SELECT * FROM blocks WHERE finality = $1 ORDER BY block_number DESC LIMIT 1`;
-    const result = await this.pool.query(query, [Finality.FINAL]);
+  async getHighestFinalBlock(chainId: number): Promise<Block> {
+    const query = `
+    SELECT * FROM blocks 
+    WHERE finality = $1 AND chain_id = $2
+    ORDER BY block_number DESC LIMIT 1
+    `;
+    const result = await this.pool.query(query, [Finality.FINAL, chainId]);
     if (result.rowCount === 0) return null;
     const row = result.rows[0];
-    return { blockHash: row.block_hash, blockNumber: row.block_number, finality: row.finality };
+    return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };
   }
 }
