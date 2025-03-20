@@ -58,7 +58,6 @@ CREATE TABLE reservation_created_events (
     state TEXT NOT NULL,
     position_id CHAR(66) NOT NULL,
     amount NUMERIC NOT NULL,
-    created_at_block INTEGER NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
     block_hash CHAR(66) NOT NULL            -- from EventBase
 );

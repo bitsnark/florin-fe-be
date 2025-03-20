@@ -1,7 +1,15 @@
 import { Block, Finality } from "../common/types";
 import { Db } from "./db";
 
-export class BlockDb extends Db {
+export interface IBlockDb {
+  create(block: Block): Promise<void>;
+  getByHash(blockHash: string): Promise<Block | null>;
+  updateFinality(blockHash: string, finality: Finality);
+  getBlocksByFinality(chainId: number, finality: Finality): Promise<Block[]>;
+  getHighestFinalBlock(chainId: number): Promise<Block>;
+}
+
+export class BlockDb extends Db implements IBlockDb {
 
   async create(block: Block): Promise<void> {
     const query = `

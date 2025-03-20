@@ -6,7 +6,7 @@ export class ReservationCreatedEventDb extends Db {
     async create(event: Exclude<ReservationCreatedEvent, 'eventId'>): Promise<void> {
         const query = `
         INSERT INTO reservation_created_events
-        (reservation_id, owner_address, state, position_id, amount, created_at_block, block_number, block_hash)
+        (reservation_id, owner_address, state, position_id, amount, state_block, block_number, block_hash)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (reservation_id) DO NOTHING
       `;

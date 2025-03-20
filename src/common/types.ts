@@ -90,9 +90,6 @@ export interface Reservation {
     // Number of tokens to hold
     // 10^18 precision
     amount: bigint;
-
-    // Number of EVM block that this reservation was created
-    createdAtBlock: number;
 }
 
 export interface ReservationCreatedEvent extends EventBase, Reservation { }
