@@ -18,6 +18,9 @@ export interface IConfig {
     contractAddress: string;
     finalityBlocks: number;
     loopIntervalMs: number;
+
+    httpPort: number;
+    httpsPort: number;
 }
 
 export const config: IConfig = {
@@ -29,10 +32,13 @@ export const config: IConfig = {
     postgresPassword: parse.string('POSTGRES_PASSWORD', '1234'),
     postgresKeepAlive: parse.boolean('POSTGRES_KEEP_ALIVE', true),
 
-    blockStart: 0,
-    providerUrl: process.env.ETH_PROVIDER_URL || 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID',
-    chainId: 20002,
-    contractAddress: '0x000000',
-    finalityBlocks: 20,
-    loopIntervalMs: 1000
+    blockStart: parse.integer('BLOCK_START', 0),
+    providerUrl: parse.string('PROVIDER_URL', 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'),
+    chainId: parse.integer('CHAIN_ID', 20002),
+    contractAddress: parse.string('CONTRACT_ADDRESS', '0x000000'),
+    finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
+    loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
+
+    httpPort: parse.integer('HTTP_PORT', 800),
+    httpsPort: parse.integer('HTTPS_PORT', 4430)
 }

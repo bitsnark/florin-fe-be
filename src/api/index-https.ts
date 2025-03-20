@@ -2,6 +2,7 @@ import * as https from 'https';
 import * as fs from 'fs';
 import { Express } from 'express';
 import { setApi } from './api';
+import { config } from '../common/config';
 
 function initServer() {
     const app = Express();
@@ -20,7 +21,7 @@ function initServer() {
     };
 
     // Create HTTPS server with the Express app
-    const port = 8443;
+    const port = config.httpsPort;
     https.createServer(options, app).listen(port, () => {
         console.log(`HTTPS server listening on port ${port}`);
     });

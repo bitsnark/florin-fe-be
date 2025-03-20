@@ -1,6 +1,7 @@
 import * as http from 'http';
 import { Express } from 'express';
 import { setApi } from './api';
+import { config } from '../common/config';
 
 export function initServer(): { server: http.Server; app: Express } {
     // Create an Express application
@@ -13,7 +14,7 @@ export function initServer(): { server: http.Server; app: Express } {
     const options = {};
 
     // Create HTTP server with the Express app
-    const port = 8000;
+    const port = config.httpPort;
     const server = http.createServer(options, app).listen(port, () => {
         console.log(`HTTP server listening on port ${port}`);
     });
