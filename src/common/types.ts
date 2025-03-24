@@ -64,7 +64,7 @@ export interface PositionStateEvent
     state: PositionState;
 }
 
-export interface Position extends PositionCreatedEvent, PositionStateEvent { }
+export interface Position extends PositionCreatedEvent, PositionStateEvent, Pick<Block, 'finality'> { }
 
 export enum ReservationState {
     NONE = 'NONE',
@@ -98,6 +98,6 @@ export interface ReservationStateEvent
     state: ReservationState;
 }
 
-export interface Reservation extends ReservationCreatedEvent, ReservationStateEvent {
+export interface Reservation extends ReservationCreatedEvent, ReservationStateEvent, Pick<Block, 'finality'> {
 }
 

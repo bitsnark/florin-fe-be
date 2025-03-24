@@ -12,7 +12,8 @@ function rowToPosition(row: any): Position {
         bitcoinAddress: row.bitcoin_address,
         exchangeRate: row.exchange_rate,
         blockNumber: 0,
-        blockHash: ''
+        blockHash: '',
+        finality: row.finality
     };
 }
 

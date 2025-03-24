@@ -9,7 +9,8 @@ function rowToReservation(row: any): Reservation {
         blockNumber: 0,
         blockHash: '',
         reservationId: '',
-        amount: 0n
+        amount: 0n,
+        finality: row.finality
     };
 }
 

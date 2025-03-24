@@ -1,5 +1,5 @@
 import { EventsDb } from '../src/db/events-db';
-import { PositionCreatedEvent, PositionState, PositionStateEvent, ReservationCreatedEvent, ReservationState, ReservationStateEvent } from '../src/common/types';
+import { Finality, PositionCreatedEvent, PositionState, PositionStateEvent, ReservationCreatedEvent, ReservationState, ReservationStateEvent } from '../src/common/types';
 import { describe, beforeEach, it, expect } from '@jest/globals';
 
 describe('EventsDb', () => {
@@ -23,7 +23,7 @@ describe('EventsDb', () => {
                 bitcoinAddress: '1BitcoinAddress',
                 exchangeRate: 10n ** 10n,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash',
+                blockHash: '0xBlockHash'
             };
 
             const eventId = await eventsDb.positionCreated(event);
@@ -37,7 +37,7 @@ describe('EventsDb', () => {
                 positionId: fakePositionId,
                 state: PositionState.ACTIVE,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash',
+                blockHash: '0xBlockHash'
             };
 
             const eventId = await eventsDb.positionStateChanged(event);
@@ -53,7 +53,7 @@ describe('EventsDb', () => {
                 positionId: fakePositionId,
                 amount: 500n,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash',
+                blockHash: '0xBlockHash'
             };
 
             const eventId = await eventsDb.reservationCreated(event);
@@ -67,7 +67,7 @@ describe('EventsDb', () => {
                 reservationId: fakeReservationId,
                 state: ReservationState.PENDING,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash',
+                blockHash: '0xBlockHash'
             };
 
             const eventId = await eventsDb.reservationStateChanged(event);
