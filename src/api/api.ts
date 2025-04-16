@@ -1,9 +1,83 @@
+/**
+ * Configures the API routes for the provided Express application.
+ *
+ * @param app - The Express application instance to configure.
+ *
+ * ### Routes:
+ *
+ * #### General
+ * - `GET /` - Returns a greeting message for sanity check.
+ *
+ * #### Positions
+ * - `GET /positions/owner/:id` - Retrieves positions by owner ID.
+ *   - **Query Parameters**:
+ *     - `finalityFlag` (optional): A boolean flag to filter results based on finality.
+ *   - **Path Parameters**:
+ *     - `id`: The owner ID (required).
+ *   - **Responses**:
+ *     - `200`: Returns the positions as JSON.
+ *     - `400`: If the `id` is missing.
+ *     - `500`: Internal server error.
+ *
+ * - `GET /positions/active` - Retrieves all active positions.
+ *   - **Query Parameters**:
+ *     - `finalityFlag` (optional): A boolean flag to filter results based on finality.
+ *   - **Responses**:
+ *     - `200`: Returns the active positions as JSON.
+ *     - `500`: Internal server error.
+ *
+ * - `GET /positions/:id` - Retrieves a position by its ID.
+ *   - **Query Parameters**:
+ *     - `finalityFlag` (optional): A boolean flag to filter results based on finality.
+ *   - **Path Parameters**:
+ *     - `id`: The position ID (required).
+ *   - **Responses**:
+ *     - `200`: Returns the position as JSON.
+ *     - `400`: If the `id` is missing.
+ *     - `404`: If the position is not found.
+ *     - `500`: Internal server error.
+ *
+ * - `POST /positions` - Creates a new position.
+ *   - **Responses**:
+ *     - `500`: Not implemented.
+ *
+ * #### Reservations
+ * - `GET /reservations/owner/:id` - Retrieves reservations by owner ID.
+ *   - **Query Parameters**:
+ *     - `finalityFlag` (optional): A boolean flag to filter results based on finality.
+ *   - **Path Parameters**:
+ *     - `id`: The owner ID (required).
+ *   - **Responses**:
+ *     - `200`: Returns the reservations as JSON.
+ *     - `400`: If the `id` is missing.
+ *     - `500`: Internal server error.
+ *
+ * - `GET /reservations/active` - Retrieves all active reservations in the `PENDING` state.
+ *   - **Query Parameters**:
+ *     - `finalityFlag` (optional): A boolean flag to filter results based on finality.
+ *   - **Responses**:
+ *     - `200`: Returns the active reservations as JSON.
+ *     - `500`: Internal server error.
+ *
+ * - `GET /reservations/:id` - Retrieves a reservation by its ID.
+ *   - **Query Parameters**:
+ *     - `finalityFlag` (optional): A boolean flag to filter results based on finality.
+ *   - **Path Parameters**:
+ *     - `id`: The reservation ID (required).
+ *   - **Responses**:
+ *     - `200`: Returns the reservation as JSON.
+ *     - `400`: If the `id` is missing.
+ *     - `404`: If the reservation is not found.
+ *     - `500`: Internal server error.
+ */
+
 import { MaterializedPosition } from '../db/materlialized-position';
 import { MaterializedReservation } from '../db/materialized-reservation';
 import { Express } from 'express';
 import { ReservationState } from '../common/types';
 
 export const indexGreeting = 'This is the Florin API index';
+
 export function setApi(app: Express) {
 
     const materializedPosition = new MaterializedPosition();
