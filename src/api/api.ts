@@ -1,6 +1,7 @@
 import { MaterializedPosition } from '../db/materlialized-position';
 import { MaterializedReservation } from '../db/materialized-reservation';
 import { Express } from 'express';
+import { ReservationState } from '../common/types';
 
 export const indexGreeting = 'This is the Florin API index';
 export function setApi(app: Express) {
@@ -15,12 +16,13 @@ export function setApi(app: Express) {
 
     app.get('/positions/owner/:id', async (req, res) => {
         try {
+            const finalityFlag = !!req.query.finalityFlag;
             const { id } = req.params;
             if (!id) {
                 res.status(400).send('ID is required');
                 return;
             }
-            const ret = await materializedPosition.getPositionsByOwner(id);
+            const ret = await materializedPosition.getPositionsByOwner(id, finalityFlag);
             if (ret) res.send(JSON.stringify(ret));
         } catch (e) {
             console.error(e);
@@ -30,7 +32,8 @@ export function setApi(app: Express) {
 
     app.get('/positions/active', async (req, res) => {
         try {
-            const ret = await materializedPosition.getActivePositions();
+            const finalityFlag = !!req.query.finalityFlag;
+            const ret = await materializedPosition.getActivePositions(finalityFlag);
             if (ret) res.send(JSON.stringify(ret));
         } catch (e) {
             console.error(e);
@@ -39,13 +42,14 @@ export function setApi(app: Express) {
     });
 
     app.get('/positions/:id', async (req, res) => {
+        const finalityFlag = !!req.query.finalityFlag;
         const { id } = req.params;
         if (!id) {
             res.status(400).send('ID is required');
             return;
         }
         try {
-            const item = await materializedPosition.getPositionById(id);
+            const item = await materializedPosition.getPositionById(id, finalityFlag);
             if (item) {
                 res.send(JSON.stringify(item));
             } else {
@@ -57,13 +61,24 @@ export function setApi(app: Express) {
     });
 
     app.get('/reservations/owner/:id', async (req, res) => {
+        const finalityFlag = !!req.query.finalityFlag;
         const { id } = req.params;
         if (!id) {
             res.status(400).send('ID is required');
             return;
         }
         try {
-            const ret = await materializedReservation.getReservationByOwner(id);
+            const ret = await materializedReservation.getReservationByOwner(id, finalityFlag);
+            if (ret) res.send(JSON.stringify(ret));
+        } catch (error) {
+            res.status(500).send('Internal Server Error');
+        }
+    });
+
+    app.get('/reservations/active', async (req, res) => {
+        try {
+            const finalityFlag = !!req.query.finalityFlag;
+            const ret = await materializedReservation.getReservationsByState(ReservationState.PENDING, finalityFlag);
             if (ret) res.send(JSON.stringify(ret));
         } catch (error) {
             res.status(500).send('Internal Server Error');
@@ -71,13 +86,14 @@ export function setApi(app: Express) {
     });
 
     app.get('/reservations/:id', async (req, res) => {
+        const finalityFlag = !!req.query.finalityFlag;
         const { id } = req.params;
         if (!id) {
             res.status(400).send('ID is required');
             return;
         }
         try {
-            const item = await materializedReservation.getReservationById(id);
+            const item = await materializedReservation.getReservationById(id, finalityFlag);
             if (item) {
                 res.send(JSON.stringify(item));
             } else {
@@ -86,5 +102,9 @@ export function setApi(app: Express) {
         } catch (error) {
             res.status(500).send('Internal Server Error');
         }
+    });
+
+    app.post('/positions', async (req, res) => {
+        throw new Error('Not implemented');
     });
 }

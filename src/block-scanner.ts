@@ -38,12 +38,6 @@ export class BlockScanner {
                 throw new Error(`Block at height ${blockNumber} not found`);
             }
 
-            const filter = {
-                address: config.contractAddress,
-                fromBlock: blockNumber,
-                toBlock: blockNumber,
-            };
-
             await this.processEvents(blockNumber, evmBlock.hash);
 
             await this.blockDb.create({
@@ -85,7 +79,7 @@ export class BlockScanner {
             if (final == 0) {
                 throw new Error(`No final blocks for height: ${blockNumber}`);
             }
-            if (final != 1) {
+            if (final > 1) {
                 throw new Error(`More than one final block for height: ${blockNumber}`);
             }
         }
