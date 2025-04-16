@@ -6,10 +6,10 @@ function rowToReservation(row: any): Reservation {
         positionId: row.position_id,
         state: row.state,
         ownerAddress: row.owner_address,
-        blockNumber: 0,
-        blockHash: '',
-        reservationId: '',
-        amount: 0n,
+        blockNumber: row.block_number,
+        blockHash: row.block_hash,
+        reservationId: row.reservation_id,
+        amount: row.amount,
         finality: row.finality
     };
 }
@@ -22,19 +22,18 @@ export class MaterializedReservation extends Db {
 
     async getReservationById(reservationId: string, finalityFlag?: boolean): Promise<Reservation> {
         const query = `
-        SELECT * from reservation_created_event, reservation_state_event, blocks
+        SELECT * from reservation_created_events, reservation_state_events, blocks
         WHERE
-        reservation_created_event.reservation_id = reservation_state_event.reservation_id
-        AND position_state_event.block_hash = blocks.block_hash
-        AND reservation_id = $1
-        AND finality IN $2
-        ORDER BY reservation_state_event.event_id DESC LIMIT 1
+        reservation_created_events.reservation_id = reservation_state_events.reservation_id
+        AND 
+            ( reservation_created_events.block_hash = blocks.block_hash OR 
+             reservation_state_events.block_hash = blocks.block_hash )
+        AND reservation_created_events.reservation_id = $1
+        AND ${finalityFlag ? "blocks.finality = 'FINAL'" : "blocks.finality <> 'REVERTED'"}
+        ORDER BY reservation_state_events.event_id DESC LIMIT 1
         `;
-        const result = await this.query<any>(query, [
-            reservationId,
-            finalityFlag ? [Finality.FINAL] : [Finality.FINAL, Finality.UNKNOWN]
-        ]);
-        if (result.rows.length == 1) return undefined;
+        const result = await this.query(query, [reservationId]);
+        if (result.rows.length != 1) return undefined;
         return rowToReservation(result.rows[0]);
     }
 
@@ -47,39 +46,19 @@ export class MaterializedReservation extends Db {
             b.finality,
             b.block_number,
             b.chain_id
-        FROM reservation_created_events rce
-        JOIN reservation_state_events rse ON pce.reservation_id = pse.reservation_id
-        JOIN blocks b ON rse.block_hash = b.block_hash
-        WHERE b.finality IN $1
+        FROM reservation_created_events rce, reservation_state_events rse, blocks b
+        WHERE
+        rce.reservation_id = rse.reservation_id
+        AND rse.block_hash = b.block_hash
+        AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
         ORDER BY rce.reservation_id, rse.event_id DESC;
         `;
-        const result = await this.query<any>(query, [
-            finalityFlag ? [Finality.FINAL] : [Finality.FINAL, Finality.UNKNOWN]
-        ]);
+        const result = await this.query(query, []);
         return result.rows.map(rowToReservation);
     }
 
     async getReservationsByState(reservationState: ReservationState, finalityFlag?: boolean): Promise<Reservation[]> {
-        const query = `
-        SELECT DISTINCT ON (rce.reservation_id)
-            rce.*,
-            rse.state,
-            rse.event_id,
-            b.finality,
-            b.block_number,
-            b.chain_id
-        FROM reservation_created_events rce
-        JOIN reservation_state_events rse ON pce.reservation_id = pse.reservation_id
-        JOIN blocks b ON rse.block_hash = b.block_hash
-        WHERE b.finality IN $1
-        AND rse.state IN $2
-        ORDER BY rce.reservation_id, rse.event_id DESC;
-        `;
-        const result = await this.query<any>(query, [
-            finalityFlag ? [Finality.FINAL] : [Finality.FINAL, Finality.UNKNOWN],
-            [reservationState],
-        ]);
-        return result.rows.map(rowToReservation);
+        return (await this.getAllReservations(finalityFlag)).filter(r => r.state == reservationState);
     }
 
     async getReservationByOwner(ownerAddress: string, finalityFlag?: boolean): Promise<Reservation[]> {

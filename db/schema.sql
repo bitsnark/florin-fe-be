@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS blocks;
 -- ============================
 CREATE TABLE blocks (
     block_hash CHAR(66) PRIMARY KEY,  -- Unique id, hex string (32 bytes with 0x prefix)
-    chain_id NUMERIC NOT NULL,
+    chain_id INTEGER NOT NULL,
     block_number INTEGER NOT NULL,
     finality TEXT NOT NULL            -- Finality status: 'UNKNOWN', 'FINAL', 'REVERTED'
 );
@@ -24,12 +24,12 @@ CREATE TABLE blocks (
 CREATE TABLE position_created_events (
     event_id SERIAL PRIMARY KEY,
     position_id CHAR(66) NOT NULL UNIQUE,      -- Unique identifier for this position
-    chain_id NUMERIC NOT NULL,
+    chain_id INTEGER NOT NULL,
     owner_address CHAR(42) NOT NULL,
     token_address CHAR(42) NOT NULL,
-    original_amount NUMERIC NOT NULL,
+    original_amount BIGINT NOT NULL,
     bitcoin_address CHAR(66) NOT NULL,
-    exchange_rate NUMERIC NOT NULL,
+    exchange_rate BIGINT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
     block_hash CHAR(66) NOT NULL           -- from EventBase
 );
@@ -55,7 +55,7 @@ CREATE TABLE reservation_created_events (
     reservation_id CHAR(66) NOT NULL UNIQUE,
     owner_address CHAR(42) NOT NULL,
     position_id CHAR(66) NOT NULL,
-    amount NUMERIC NOT NULL,
+    amount BIGINT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
     block_hash CHAR(66) NOT NULL            -- from EventBase
 );

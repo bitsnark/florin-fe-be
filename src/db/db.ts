@@ -1,5 +1,5 @@
 import { config } from '../common/config';
-import { Client } from 'pg';
+import { connect } from 'ts-postgres';
 
 export type DbValue = string | number | boolean | object | null | undefined;
 export type QueryArgs = DbValue[];
@@ -24,28 +24,39 @@ export class Db {
     }
 
     protected async connect() {
-        return new Client({
+        return await connect({
             user: this.user,
             host: this.host,
             port: this.port,
             password: this.password,
             database: this.database,
-            keepAlive: config.postgresKeepAlive
+            keepAlive: config.postgresKeepAlive,
+            bigints: true
         });
     }
 
-    public async query<Row>(sql: string, params: QueryArgs, _client?: Client) {
-        const client = _client ? _client : await this.connect();
+    public async query(sql: string, params: any[]) {
+        let client;
         try {
-            await client.connect();
-            return await client.query<Row>(sql, params ?? []);
+            client = await this.connect();
+            const result = await client.query(sql, params ?? []);
+            const names = result.names;
+            const objarray: any[] = [];
+            for (let i = 0; i < result.rows.length; i++) {
+                const obj: any = {};
+                for (let j = 0; j < names.length; j++) {
+                    obj[names[j]] = result.rows[i][j];
+                }
+                objarray.push(obj);
+            }
+            return { rows: objarray };
         } catch (error) {
-            console.error(error);
+            console.error(error.message);
             console.error('SQL: ', sql);
             console.error('params: ', params);
             throw error;
         } finally {
-            if (!_client) await client.end();
+            await client.end();
         }
     }
 

@@ -11,19 +11,18 @@ export class EventsDb extends Db {
             ON CONFLICT (position_id) DO NOTHING
             RETURNING event_id
           `;
-    const result = await this.query<any>(query, [
+    const result = await this.query(query, [
       event.positionId,
       event.chainId,
       event.ownerAddress,
       event.tokenAddress,
-      String(event.originalAmount),
+      event.originalAmount,
       event.bitcoinAddress,
-      String(event.exchangeRate),
+      event.exchangeRate,
       event.blockNumber,
       event.blockHash
     ]);
-    const eventId = result.rows[0].event_id;
-    return eventId;
+    return result.rows[0];
   }
 
   async positionStateChanged(event: Exclude<PositionStateEvent, 'eventId'>): Promise<number> {
@@ -33,14 +32,13 @@ export class EventsDb extends Db {
         VALUES ($1, $2, $3, $4)
         RETURNING event_id
       `;
-    const result = await this.query<any>(query, [
+    const result = await this.query(query, [
       event.positionId,
       event.state,
       event.blockNumber,
       event.blockHash,
     ]);
-    const eventId = result.rows[0].event_id;
-    return eventId;
+    return result.rows[0];
   }
 
   async reservationCreated(event: Exclude<ReservationCreatedEvent, 'eventId'>): Promise<number> {
@@ -51,7 +49,7 @@ export class EventsDb extends Db {
       ON CONFLICT (reservation_id) DO NOTHING
       RETURNING event_id
     `;
-    const result = await this.query<any>(query, [
+    const result = await this.query(query, [
       event.reservationId,
       event.ownerAddress,
       event.positionId,
@@ -59,8 +57,7 @@ export class EventsDb extends Db {
       event.blockNumber,
       event.blockHash,
     ]);
-    const eventId = result.rows[0].event_id;
-    return eventId;
+    return result.rows[0];
   }
 
   async reservationStateChanged(event: Exclude<ReservationStateEvent, 'eventId'>): Promise<number> {
@@ -70,13 +67,12 @@ export class EventsDb extends Db {
     VALUES ($1, $2, $3, $4)
     RETURNING event_id
   `;
-    const result = await this.query<any>(query, [
+    const result = await this.query(query, [
       event.reservationId,
       event.state,
       event.blockNumber,
       event.blockHash,
     ]);
-    const eventId = result.rows[0].event_id;
-    return eventId;
+    return result.rows[0];
   }
 }

@@ -7,7 +7,8 @@
   "scripts": {
     "test": "jest --detectOpenHandles",
     "postgres": "./scripts/postgres.sh",
-    "build": "tsc"
+    "build": "tsc",
+    "start": "ts-node ./src/api/index.ts"
   },
   "repository": {
     "type": "git",
@@ -21,9 +22,12 @@
   "homepage": "https://github.com/bitsnark/florin-fe-be#readme",
   "devDependencies": {
     "@jest/globals": "29.7.0",
-    "@types/node": "22.13.10",
+    "@types/express": "^5.0.1",
+    "@types/jest": "^29.5.14",
+    "@types/node": "20.16.10",
     "@types/pg": "8.11.11",
     "jest": "29.7.0",
+    "supertest": "^7.1.0",
     "ts-jest": "29.2.6",
     "ts-node": "10.9.2"
   },
@@ -31,6 +35,6 @@
     "dotenv": "16.4.7",
     "ethers": "6.13.5",
     "express": "4.21.2",
-    "pg": "8.14.1"
+    "ts-postgres": "^2.0.4"
   }
 }

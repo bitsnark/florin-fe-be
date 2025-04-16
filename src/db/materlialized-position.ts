@@ -11,8 +11,8 @@ function rowToPosition(row: any): Position {
         originalAmount: row.original_amount,
         bitcoinAddress: row.bitcoin_address,
         exchangeRate: row.exchange_rate,
-        blockNumber: 0,
-        blockHash: '',
+        blockNumber: row.block_number,
+        blockHash: row.block_hash,
         finality: row.finality
     };
 }
@@ -25,19 +25,20 @@ export class MaterializedPosition extends Db {
 
     async getPositionById(positionId: string, finalityFlag?: boolean): Promise<Position> {
         const query = `
-        SELECT * from position_created_event, position_state_event, blocks
+        SELECT * FROM position_created_events, position_state_events, blocks
         WHERE
-        position_created_event.position_id = position_state_event.position_id
-        AND position_state_event.block_hash = blocks.block_hash
-        AND position_id = $1
-        AND finality IN $2
-        ORDER BY position_state_event.event_id DESC LIMIT 1
+        position_created_events.position_id = position_state_events.position_id
+        AND 
+            ( position_state_events.block_hash = blocks.block_hash OR 
+             position_created_events.block_hash = blocks.block_hash )
+        AND position_created_events.position_id = $1
+        AND ${finalityFlag ? "blocks.finality = 'FINAL'" : "blocks.finality <> 'REVERTED'"}
+        ORDER BY position_state_events.event_id DESC LIMIT 1
         `;
-        const result = await this.query<any>(query, [
-            positionId,
-            finalityFlag ? [Finality.FINAL] : [Finality.FINAL, Finality.UNKNOWN]
+        const result = await this.query(query, [
+            positionId
         ]);
-        if (result.rows.length == 1) return undefined;
+        if (result.rows.length < 1) return undefined;
         return rowToPosition(result.rows[0]);
     }
 
@@ -53,12 +54,11 @@ export class MaterializedPosition extends Db {
         FROM position_created_events pce
         JOIN position_state_events pse ON pce.position_id = pse.position_id
         JOIN blocks b ON pse.block_hash = b.block_hash
-        WHERE b.finality IN $1
+        WHERE 
+        ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
         ORDER BY pce.position_id, pse.event_id DESC;
         `;
-        const result = await this.query<any>(query, [
-            finalityFlag ? [Finality.FINAL] : [Finality.FINAL, Finality.UNKNOWN]
-        ]);
+        const result = await this.query(query, []);
         return result.rows.map(rowToPosition);
     }
 

@@ -2,11 +2,11 @@ import { EventsDb } from '../src/db/events-db';
 import { Finality, PositionCreatedEvent, PositionState, PositionStateEvent, ReservationCreatedEvent, ReservationState, ReservationStateEvent } from '../src/common/types';
 import { describe, beforeEach, it, expect } from '@jest/globals';
 
+const fakePositionId = `${Date.now()}`;
+const fakeReservationId = `${Date.now()}`;
+
 describe('EventsDb', () => {
     let eventsDb: EventsDb;
-
-    const fakePositionId = `${Date.now()}`;
-    const fakeReservationId = `${Date.now()}`;
 
     beforeEach(() => {
         eventsDb = new EventsDb();
@@ -21,7 +21,7 @@ describe('EventsDb', () => {
                 tokenAddress: '0xToken',
                 originalAmount: 1000n,
                 bitcoinAddress: '1BitcoinAddress',
-                exchangeRate: 10n ** 10n,
+                exchangeRate: 10n ** 8n,
                 blockNumber: 12345,
                 blockHash: '0xBlockHash'
             };

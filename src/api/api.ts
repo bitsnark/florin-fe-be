@@ -75,6 +75,7 @@ import { MaterializedPosition } from '../db/materlialized-position';
 import { MaterializedReservation } from '../db/materialized-reservation';
 import { Express } from 'express';
 import { ReservationState } from '../common/types';
+import { jsonStringifyCustom } from '../common/json';
 
 export const indexGreeting = 'This is the Florin API index';
 
@@ -89,15 +90,15 @@ export function setApi(app: Express) {
     });
 
     app.get('/positions/owner/:id', async (req, res) => {
+        const finalityFlag = !!req.query.finalityFlag;
+        const { id } = req.params;
+        if (!id) {
+            res.status(400).send('ID is required');
+            return;
+        }
         try {
-            const finalityFlag = !!req.query.finalityFlag;
-            const { id } = req.params;
-            if (!id) {
-                res.status(400).send('ID is required');
-                return;
-            }
             const ret = await materializedPosition.getPositionsByOwner(id, finalityFlag);
-            if (ret) res.send(JSON.stringify(ret));
+            if (ret) res.send(jsonStringifyCustom(ret));
         } catch (e) {
             console.error(e);
             res.status(500).send('Internal Server Error');
@@ -108,7 +109,7 @@ export function setApi(app: Express) {
         try {
             const finalityFlag = !!req.query.finalityFlag;
             const ret = await materializedPosition.getActivePositions(finalityFlag);
-            if (ret) res.send(JSON.stringify(ret));
+            if (ret) res.send(jsonStringifyCustom(ret));
         } catch (e) {
             console.error(e);
             res.status(500).send('Internal Server Error');
@@ -125,11 +126,12 @@ export function setApi(app: Express) {
         try {
             const item = await materializedPosition.getPositionById(id, finalityFlag);
             if (item) {
-                res.send(JSON.stringify(item));
+                res.send(jsonStringifyCustom(item));
             } else {
                 res.status(404).send('Item not found');
             }
         } catch (error) {
+            console.log(error);
             res.status(500).send('Internal Server Error');
         }
     });
@@ -143,8 +145,9 @@ export function setApi(app: Express) {
         }
         try {
             const ret = await materializedReservation.getReservationByOwner(id, finalityFlag);
-            if (ret) res.send(JSON.stringify(ret));
+            if (ret) res.send(jsonStringifyCustom(ret));
         } catch (error) {
+            console.log(error);
             res.status(500).send('Internal Server Error');
         }
     });
@@ -153,8 +156,9 @@ export function setApi(app: Express) {
         try {
             const finalityFlag = !!req.query.finalityFlag;
             const ret = await materializedReservation.getReservationsByState(ReservationState.PENDING, finalityFlag);
-            if (ret) res.send(JSON.stringify(ret));
+            if (ret) res.send(jsonStringifyCustom(ret));
         } catch (error) {
+            console.log(error);
             res.status(500).send('Internal Server Error');
         }
     });
@@ -169,16 +173,22 @@ export function setApi(app: Express) {
         try {
             const item = await materializedReservation.getReservationById(id, finalityFlag);
             if (item) {
-                res.send(JSON.stringify(item));
+                res.send(jsonStringifyCustom(item));
             } else {
                 res.status(404).send('Item not found');
             }
         } catch (error) {
+            console.log(error);
             res.status(500).send('Internal Server Error');
         }
     });
 
     app.post('/positions', async (req, res) => {
-        throw new Error('Not implemented');
+        try {
+            throw new Error('Not implemented');
+        } catch (error) {
+            console.log(error);
+            res.status(500).send('Internal Server Error');
+        }
     });
 }

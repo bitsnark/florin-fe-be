@@ -1,11 +1,11 @@
 import * as http from 'http';
-import { Express } from 'express';
+import express from 'express';
 import { setApi } from './api';
 import { config } from '../common/config';
 
-export function initServer(): { server: http.Server; app: Express } {
+export function initServer() {
     // Create an Express application
-    const app = Express();
+    const app = express();
 
     // Define endpoints
     setApi(app);
@@ -18,8 +18,6 @@ export function initServer(): { server: http.Server; app: Express } {
     const server = http.createServer(options, app).listen(port, () => {
         console.log(`HTTP server listening on port ${port}`);
     });
-
-    return { server, app };
 }
 
 const scriptName = __filename;

@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, test } from '@jest/globals';
 import { BlockDb } from '../src/db/block-db';
 import { Finality } from '../src/common/types';
-import { config } from '../src/common/config';
+
+const fakeBlockHash = `${Date.now()}`;
+
+const fakeBlock = {
+    blockHash: fakeBlockHash,
+    chainId: 20002,
+    blockNumber: 1,
+    finality: Finality.UNKNOWN
+};
 
 describe('Block DB', () => {
 
@@ -10,13 +18,6 @@ describe('Block DB', () => {
     beforeEach(() => {
         db = new BlockDb();
     });
-
-    const fakeBlock = {
-        blockHash: '0x1234',
-        chainId: 20002,
-        blockNumber: 1,
-        finality: Finality.UNKNOWN
-    };
 
     test('create and read', async () => {
         await db.create(fakeBlock);
