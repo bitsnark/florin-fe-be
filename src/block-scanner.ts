@@ -20,7 +20,7 @@ export class BlockScanner {
     async processEvents(blockNumber: number, blockHash: string) {
         const parsedLogs = await this.provider.getParsedLogs(blockNumber);
         for (const log of parsedLogs) {
-            await this.eventWriter.parseEvent(blockNumber, blockHash, log);
+            await this.eventWriter.parseEvent(blockNumber, blockHash, log.txhash, log);
         }
     }
 

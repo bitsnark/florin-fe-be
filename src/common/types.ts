@@ -18,6 +18,7 @@ export interface Block {
 
 export interface EventBase {
     eventId?: number;
+    txhash: string; // hex string
     blockNumber: number;
     blockHash: string; // hex string
 }

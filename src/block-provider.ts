@@ -2,11 +2,15 @@ import { ethers, Filter, Interface, JsonRpcProvider } from "ethers";
 import { config } from "./common/config";
 import { exchangeAbi } from "./abis/exchange";
 
+export interface LogDescriptionWithTxhash extends ethers.LogDescription {
+    txhash: string;
+}
+
 export interface IBlockProvider {
     getBlockNumber(): Promise<number>;
     getBlockByHeight(height: number): Promise<ethers.Block>;
     getBlockByHash(hash: string): Promise<ethers.Block>;
-    getParsedLogs(blockNumber: number): Promise<ethers.LogDescription[]>;
+    getParsedLogs(blockNumber: number): Promise<LogDescriptionWithTxhash[]>;
 }
 
 export class BlockProvider implements IBlockProvider {
@@ -31,12 +35,15 @@ export class BlockProvider implements IBlockProvider {
         return this.provider.getBlock(hash);
     }
 
-    async getParsedLogs(blockNumber: number): Promise<ethers.LogDescription[]> {
+    async getParsedLogs(blockNumber: number): Promise<LogDescriptionWithTxhash[]> {
         const filter: Filter = {
             fromBlock: blockNumber,
             toBlock: blockNumber
         };
         const logs = await this.provider.getLogs(filter);
-        return logs.map(l => this.contractInterface.parseLog(l));
+        return logs.map(l => ({
+            ...this.contractInterface.parseLog(l),
+            txhash: l.transactionHash
+        }));
     }
 }

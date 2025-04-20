@@ -23,7 +23,8 @@ describe('EventsDb', () => {
                 bitcoinAddress: '1BitcoinAddress',
                 exchangeRate: 10n ** 8n,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash'
+                blockHash: '0xBlockHash',
+                txhash: '0x000000'
             };
 
             const eventId = await eventsDb.positionCreated(event);
@@ -37,7 +38,8 @@ describe('EventsDb', () => {
                 positionId: fakePositionId,
                 state: PositionState.ACTIVE,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash'
+                blockHash: '0xBlockHash',
+                txhash: '0x000000'
             };
 
             const eventId = await eventsDb.positionStateChanged(event);
@@ -53,7 +55,8 @@ describe('EventsDb', () => {
                 positionId: fakePositionId,
                 amount: 500n,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash'
+                blockHash: '0xBlockHash',
+                txhash: '0x000000'
             };
 
             const eventId = await eventsDb.reservationCreated(event);
@@ -67,7 +70,8 @@ describe('EventsDb', () => {
                 reservationId: fakeReservationId,
                 state: ReservationState.PENDING,
                 blockNumber: 12345,
-                blockHash: '0xBlockHash'
+                blockHash: '0xBlockHash',
+                txhash: '0x000000'
             };
 
             const eventId = await eventsDb.reservationStateChanged(event);

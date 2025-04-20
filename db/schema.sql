@@ -25,6 +25,7 @@ CREATE TABLE position_created_events (
     event_id SERIAL PRIMARY KEY,
     position_id CHAR(66) NOT NULL UNIQUE,      -- Unique identifier for this position
     chain_id INTEGER NOT NULL,
+    txhash CHAR(66) NOT NULL,               -- Transaction ID
     owner_address CHAR(42) NOT NULL,
     token_address CHAR(42) NOT NULL,
     original_amount BIGINT NOT NULL,
@@ -40,6 +41,7 @@ CREATE TABLE position_created_events (
 -- ============================
 CREATE TABLE position_state_events (
     event_id SERIAL PRIMARY KEY,
+    txhash CHAR(66) NOT NULL,               -- Transaction ID
     position_id CHAR(66) NOT NULL,
     state TEXT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
@@ -52,6 +54,7 @@ CREATE TABLE position_state_events (
 -- ============================
 CREATE TABLE reservation_created_events (
     event_id SERIAL PRIMARY KEY,
+    txhash CHAR(66) NOT NULL,               -- Transaction ID
     reservation_id CHAR(66) NOT NULL UNIQUE,
     owner_address CHAR(42) NOT NULL,
     position_id CHAR(66) NOT NULL,
@@ -66,6 +69,7 @@ CREATE TABLE reservation_created_events (
 -- ============================
 CREATE TABLE reservation_state_events (
     event_id SERIAL PRIMARY KEY,
+    txhash CHAR(66) NOT NULL,               -- Transaction ID
     reservation_id CHAR(66) NOT NULL,
     state TEXT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase

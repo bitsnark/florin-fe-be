@@ -10,7 +10,8 @@ function rowToReservation(row: any): Reservation {
         blockHash: row.block_hash,
         reservationId: row.reservation_id,
         amount: row.amount,
-        finality: row.finality
+        finality: row.finality,
+        txhash: row.txhash
     };
 }
 
