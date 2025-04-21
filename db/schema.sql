@@ -58,7 +58,9 @@ CREATE TABLE reservation_created_events (
     reservation_id CHAR(66) NOT NULL UNIQUE,
     owner_address CHAR(42) NOT NULL,
     position_id CHAR(66) NOT NULL,
+    btc_address VARCHAR(64) NOT NULL,
     amount BIGINT NOT NULL,
+    partialSettlement BOOLEAN NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
     block_hash CHAR(66) NOT NULL            -- from EventBase
 );
@@ -75,3 +77,21 @@ CREATE TABLE reservation_state_events (
     block_number INTEGER NOT NULL,         -- from EventBase
     block_hash CHAR(66) NOT NULL           -- from EventBase
 );
+
+
+-- ============================
+-- Table of btc transactions (payment for reservations)
+-- ============================
+
+CREATE TABLE bitcoin_txs (
+    txid CHARACTER VARYING NOT NULL,
+    block_hash CHARACTER VARYING NOT NULL,
+    block_height INTEGER NOT NULL,
+    target_chain_id CHARACTER VARYING NOT NULL,
+    reservation_id CHARACTER VARYING NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (txid, block_hash)
+);
+
+
+

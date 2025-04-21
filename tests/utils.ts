@@ -17,14 +17,15 @@ export async function createPosition(position: any) {
         exchangeRate: position.exchangeRate,
         blockNumber: fakeBlockNumber,
         blockHash: fakeBlockHash,
-        txhash: '0x00000'        
+        txhash: '0x00000'
     });
+
     await eventsDb.positionStateChanged({
         positionId: position.positionId,
         state: position.state,
         blockNumber: fakeBlockNumber,
         blockHash: fakeBlockHash,
-        txhash: '0x00000'        
+        txhash: '0x00000'
     });
     const blockDb = new BlockDb();
     await blockDb.create({
@@ -44,7 +45,9 @@ export async function createReservation(resevation: any) {
         blockNumber: fakeBlockNumber,
         blockHash: fakeBlockHash,
         amount: resevation.amount,
-        txhash: '0x00000'
+        txhash: '0x00000',
+        btcAddress: resevation.btcAddress,
+        partialSettlement: resevation.partialSettlement
     });
     await eventsDb.reservationStateChanged({
         reservationId: resevation.reservationId,

@@ -11,7 +11,10 @@ function rowToReservation(row: any): Reservation {
         reservationId: row.reservation_id,
         amount: row.amount,
         finality: row.finality,
-        txhash: row.txhash
+        txhash: row.txhash,
+        btcAddress: row.btc_address,
+        partialSettlement: row.partial_settlement,
+        chainId: row.chain_id,
     };
 }
 
@@ -26,8 +29,8 @@ export class MaterializedReservation extends Db {
         SELECT * from reservation_created_events, reservation_state_events, blocks
         WHERE
         reservation_created_events.reservation_id = reservation_state_events.reservation_id
-        AND 
-            ( reservation_created_events.block_hash = blocks.block_hash OR 
+        AND
+            ( reservation_created_events.block_hash = blocks.block_hash OR
              reservation_state_events.block_hash = blocks.block_hash )
         AND reservation_created_events.reservation_id = $1
         AND ${finalityFlag ? "blocks.finality = 'FINAL'" : "blocks.finality <> 'REVERTED'"}

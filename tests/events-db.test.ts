@@ -56,7 +56,8 @@ describe('EventsDb', () => {
                 amount: 500n,
                 blockNumber: 12345,
                 blockHash: '0xBlockHash',
-                txhash: '0x000000'
+                txhash: '0x000000',
+                btcAddress: '1BitcoinAddress'
             };
 
             const eventId = await eventsDb.reservationCreated(event);

@@ -22,19 +22,21 @@
   "homepage": "https://github.com/bitsnark/florin-fe-be#readme",
   "devDependencies": {
     "@jest/globals": "29.7.0",
-    "@types/express": "^5.0.1",
-    "@types/jest": "^29.5.14",
+    "@types/express": "5.0.1",
+    "@types/jest": "29.5.14",
     "@types/node": "20.16.10",
     "@types/pg": "8.11.11",
     "jest": "29.7.0",
-    "supertest": "^7.1.0",
+    "supertest": "7.1.0",
     "ts-jest": "29.2.6",
     "ts-node": "10.9.2"
   },
   "dependencies": {
+    "bech32": "2.0.0",
+    "bitcoin-core": "5.0.0",
     "dotenv": "16.4.7",
     "ethers": "6.13.5",
     "express": "4.21.2",
-    "ts-postgres": "^2.0.4"
+    "ts-postgres": "2.0.4"
   }
 }

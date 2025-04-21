@@ -43,15 +43,19 @@ describe("BlockScanner", () => {
         it("should process parsed logs and call eventWriter.parseEvent", async () => {
             const blockNumber = 1;
             const blockHash = "0x123";
+            const txhash = "0xabc";
+
             const logs = [
                 {
                     name: "event1",
                     topic: "topic1",
+                    txhash: "0xabc",
                     args: []
                 },
                 {
                     name: "event2",
                     topic: "topic2",
+                    txhash: "0xabc",
                     args: []
                 },
             ];
@@ -67,6 +71,7 @@ describe("BlockScanner", () => {
                     index + 1,
                     blockNumber,
                     blockHash,
+                    txhash,
                     log
                 );
             });

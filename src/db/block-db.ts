@@ -7,6 +7,7 @@ export interface IBlockDb {
   updateFinality(blockHash: string, finality: Finality);
   getBlocksByFinality(chainId: number, finality: Finality): Promise<Block[]>;
   getHighestFinalBlock(chainId: number): Promise<Block>;
+  getHighestBlock(chainId: number): Promise<Block>;
 }
 
 export class BlockDb extends Db implements IBlockDb {
@@ -23,7 +24,7 @@ export class BlockDb extends Db implements IBlockDb {
   async getByHash(blockHash: string): Promise<Block> {
     const query = `
       SELECT *
-      FROM blocks 
+      FROM blocks
       WHERE block_hash = $1
     `;
     const result = await this.query(query, [blockHash]);
@@ -48,7 +49,7 @@ export class BlockDb extends Db implements IBlockDb {
 
   async getBlocksByFinality(chainId: number, finality: Finality): Promise<Block[]> {
     const query = `
-    SELECT * FROM blocks 
+    SELECT * FROM blocks
     WHERE finality = $1 AND chain_id = $2
     `;
     const result = await this.query(query, [finality, chainId]);
@@ -62,11 +63,23 @@ export class BlockDb extends Db implements IBlockDb {
 
   async getHighestFinalBlock(chainId: number): Promise<Block> {
     const query = `
-    SELECT * FROM blocks 
+    SELECT * FROM blocks
     WHERE finality = $1 AND chain_id = $2
     ORDER BY block_number DESC LIMIT 1
     `;
     const result = await this.query(query, [Finality.FINAL, chainId]);
+    if (result.rows.length < 1) return null;
+    const row = result.rows[0];
+    return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };
+  }
+
+  async getHighestBlock(chainId: number): Promise<Block> {
+    const query = `
+    SELECT * FROM blocks
+    WHERE finality <> 1$ AND chain_id = $2
+    ORDER BY block_number DESC LIMIT 1
+    `;
+    const result = await this.query(query, [Finality.REVERTED, chainId]);
     if (result.rows.length < 1) return null;
     const row = result.rows[0];
     return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };

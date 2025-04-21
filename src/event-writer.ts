@@ -54,7 +54,9 @@ export class EventWriter implements IEventWriter {
             reservationId: args[index++],
             ownerAddress: args[index++],
             positionId: args[index++],
-            amount: args[index++]
+            amount: args[index++],
+            btcAddress: args[index++],
+            partialSettlement: args[index++]
         });
     }
 
