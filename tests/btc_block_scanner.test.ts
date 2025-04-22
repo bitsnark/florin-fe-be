@@ -20,7 +20,6 @@ describe('BtcBlockScanner', () => {
 
 	beforeEach(() => {
 		blockDbMock = {
-			getHighestFinalBlock: jest.fn(),
 			getHighestBlock: jest.fn(),
 			create: jest.fn(),
 			getBlocksByFinality: jest.fn(),
@@ -47,7 +46,7 @@ describe('BtcBlockScanner', () => {
 
 			await btcBlockScanner.processNewBlocks();
 
-			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId);
+			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId, Finality.UNKNOWN);
 			expect(bitcoinNodeMock.getBlockCount).toHaveBeenCalled();
 			expect(bitcoinNodeMock.getBlockHash).toHaveBeenCalledTimes(5);
 			expect(bitcoinNodeMock.getBlock).toHaveBeenCalledTimes(5);

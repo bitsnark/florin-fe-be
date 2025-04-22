@@ -34,7 +34,7 @@ describe("BitcoinTxFinder.scanBlock", () => {
 
 	it("should skip transactions that do not match any pending reservations", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), partialSettlement: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -55,7 +55,7 @@ describe("BitcoinTxFinder.scanBlock", () => {
 
 	it("should insert a transaction with matching amount and address - partial position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), partialSettlement: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -84,7 +84,7 @@ describe("BitcoinTxFinder.scanBlock", () => {
 
 	it("should not insert a transaction if amount or address not matching - partial position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), partialSettlement: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -112,11 +112,11 @@ describe("BitcoinTxFinder.scanBlock", () => {
 
 
 	//------------------------------------------------------------------
-	//Full reservation - identify by memo + address + amount
+	//Full reservation - identify by inscription + address + amount
 	//-------------------------------------------------------------------
-	it("should insert a transaction if amount, address & memo are matching - FULL position", async () => {
+	it("should insert a transaction if amount, address & inscription are matching - FULL position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), partialSettlement: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -142,9 +142,9 @@ describe("BitcoinTxFinder.scanBlock", () => {
 		});
 	});
 
-	it("should not insert a transaction if memo,amount or address not matching - FULL position", async () => {
+	it("should not insert a transaction if inscription, amount or address not matching - FULL position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), partialSettlement: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -164,14 +164,14 @@ describe("BitcoinTxFinder.scanBlock", () => {
 					],
 				},
 				{
-					txid: "tx3", //different memo
+					txid: "tx3", //different inscription
 					vout: [
 						{ scriptPubKey: { hex: '000093608083a4284281eb999511a3994df9b4c0320e55390e69bc7bfdd5a14d24d0' } },
 						{ scriptPubKey: { address: "address1" }, value: 0.00005 },
 					],
 				},
 				{
-					txid: "tx4", //no memo
+					txid: "tx4", //no inscription
 					vout: [
 						{ scriptPubKey: { address: "address1" }, value: 0.00005 },
 					],
@@ -186,8 +186,8 @@ describe("BitcoinTxFinder.scanBlock", () => {
 		expect(mockBtcDB.insertTx).not.toHaveBeenCalled();
 	});
 
-	// 	id
+	// 	'res1' - keccak
 	// '0x3db31ba8aa54c450ea1bd76b3a5c9498f16bccecfe6de83b50029bcccc35dd17'
-	// memo
+	// inscription + chain id = 1
 	// '0x93608083a4284281eb999511a3994df9b4c0320e55390e69bc7bfdd5a14d24d9'
 });

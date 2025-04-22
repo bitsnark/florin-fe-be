@@ -6,22 +6,20 @@ import { MaterializedReservation } from "../db/materialized-reservation";
 import { BtcTxDb } from "../db/btc-tx-db";
 import { Reservation } from "../common/types";
 import { convertBytes32ToP2TRAddress } from "../common/bech32";
+import { btcToSatoshi } from "../common/btc-utils";
 
 const notFound = -1;
 
 
-export function calculateReservationId(chainId: string, id: string): string {
+export function calculateInscription(chainId: string, id: string): string {
 	const coder = new AbiCoder();
 	const encoded = coder.encode(["uint256", "uint256"], [chainId, id]);
 	return keccak256(encoded);
 }
 
-export function btcToSatoshi(btcAmount: number): number {
-	return Math.round(btcAmount * 100000000);
-}
 
-interface ReservationWithMemo extends Reservation {
-	memo?: string;
+interface ReservationWithInscription extends Reservation {
+	inscription?: string;
 }
 
 
@@ -36,33 +34,33 @@ export class BitcoinTxFinder {
 		this.btcDB = new BtcTxDb();
 	}
 
-	async getPendingReservations(): Promise<Map<string, ReservationWithMemo>> {
+	async getPendingReservationAddressMap(): Promise<Map<string, ReservationWithInscription>> {
 		const rows = await this.eventsDb.getReservationsByState(ReservationState.PENDING);
-		const reservationMap = new Map<string, ReservationWithMemo>();
+		const reservationMap = new Map<string, ReservationWithInscription>();
 		for (const row of rows) {
-			if (row.partialSettlement) {
-				//@Make sure btcAdress isnt convertBytes32ToP2TRAddress?
-				reservationMap.set(row.btcAddress, row);
+			if (row.isInscription) {
+				const inscription = calculateInscription(row.chainId.toString(), row.reservationId);
+				reservationMap.set(row.btcAddress, { ...row, inscription });
 			}
 			else {
-				const memo = calculateReservationId(row.chainId.toString(), row.reservationId);
-				reservationMap.set(row.btcAddress, { ...row, memo });
+				//@Make sure btcAdress isnt convertBytes32ToP2TRAddress?
+				reservationMap.set(row.btcAddress, row);
 			}
 		}
 		return reservationMap;
 	}
 
 	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
-		const rsvRows = await this.getPendingReservations();
+		const rsvRows = await this.getPendingReservationAddressMap();
 		if (rsvRows.size === 0) throw new Error('No pending reservations found');
 
 		const block = await this.bitcoinRPC.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
 
 		for (const tx of block.tx) {
-			let reservation: ReservationWithMemo;
+			let reservation: ReservationWithInscription;
 
-			//find transaction send to one of the pending reservations btcAddress
-			const vAddress = tx.vout.findIndex(
+			// Find transactions sent to one of the pending reservations
+			const vAddress = tx.vout.find(
 				(v: any) => {
 					if (!v.scriptPubKey || !v.scriptPubKey.address) return false;
 					const expectedAmount = rsvRows.get(v.scriptPubKey.address)?.amount;
@@ -70,20 +68,20 @@ export class BitcoinTxFinder {
 						btcToSatoshi(v.value) === Number(expectedAmount);
 				}
 			);
-			if ((vAddress === notFound)) continue
-			reservation = rsvRows.get(tx.vout[vAddress].scriptPubKey.address);
+			if (!vAddress) continue
+			reservation = rsvRows.get(vAddress.scriptPubKey.address);
 
-			//if found check the type of the connected position
-			//a full position btc transaction can be identified by the memoKey
-			//a partial position btc transaction can be identified just by the address and amount
-			if (!reservation.partialSettlement) {
-				const voutNonceIndex = tx.vout.findIndex(
+			// If found check the type of the connected position's partial/full flag
+			// A partial position btc transaction is identified by the address and amount
+			// A full position btc transaction is identified by the op_return data as well
+			if (reservation.isInscription) {
+				const vNonce = tx.vout.find(
 					(v: any) => {
 						if (!v.scriptPubKey || !v.scriptPubKey.hex) return false;
-						return reservation.memo === '0x' + v.scriptPubKey.hex.slice(4)
+						return reservation.inscription === '0x' + v.scriptPubKey.hex.slice(4)
 					}
 				);
-				if ((voutNonceIndex === notFound)) continue
+				if (!vNonce) continue
 			}
 
 

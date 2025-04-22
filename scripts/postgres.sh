@@ -22,7 +22,7 @@ done
 chmod 644 "$sql_file"
 
 # Run the PostgreSQL container.
-$docker_cmd run --name "$postgres_container_name" -dp 5434:5432 \
+$docker_cmd run --name "$postgres_container_name" -dp 5432:5432 \
     -v "$sql_file:/docker-entrypoint-initdb.d/schema.sql" \
     -e POSTGRES_PASSWORD=1234 \
     postgres

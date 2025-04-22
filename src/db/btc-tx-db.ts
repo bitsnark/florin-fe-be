@@ -1,6 +1,4 @@
-import { Block, Finality } from "../common/types";
 import { Db } from "./db";
-
 
 export interface reservationBtcTx {
   txid: string;
@@ -9,6 +7,7 @@ export interface reservationBtcTx {
   targetChainId: number;
   reservationId: string;
 }
+
 export class BtcTxDb extends Db {
 
   async insertTx(tx: reservationBtcTx): Promise<void> {

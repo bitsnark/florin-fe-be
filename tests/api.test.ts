@@ -23,6 +23,7 @@ const mockReservation = {
     reservationId: '1',
     amount: 100,
     state: ReservationState.PENDING,
+    isInscription: false,
     finality: Finality.FINAL
 };
 

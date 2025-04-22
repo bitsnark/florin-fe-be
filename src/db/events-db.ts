@@ -1,4 +1,3 @@
-import e from "express";
 import { PositionCreatedEvent, PositionStateEvent, ReservationCreatedEvent, ReservationStateEvent } from "../common/types";
 import { Db } from "./db";
 
@@ -47,7 +46,7 @@ export class EventsDb extends Db {
   async reservationCreated(event: Exclude<ReservationCreatedEvent, 'eventId'>): Promise<number> {
     const query = `
       INSERT INTO reservation_created_events
-      (reservation_id, owner_address, position_id, amount, block_number, block_hash, txhash, btc_address, partialSettlement)
+      (reservation_id, owner_address, position_id, amount, block_number, block_hash, txhash, btc_address, is_inscription)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (reservation_id) DO NOTHING
       RETURNING event_id
@@ -61,7 +60,7 @@ export class EventsDb extends Db {
       event.blockHash,
       event.txhash,
       event.btcAddress,
-      event.partialSettlement
+      event.isInscription
     ]);
     return result.rows[0];
   }

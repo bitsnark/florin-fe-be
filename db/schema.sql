@@ -60,7 +60,7 @@ CREATE TABLE reservation_created_events (
     position_id CHAR(66) NOT NULL,
     btc_address VARCHAR(64) NOT NULL,
     amount BIGINT NOT NULL,
-    partialSettlement BOOLEAN NOT NULL,
+    is_inscription BOOLEAN NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
     block_hash CHAR(66) NOT NULL            -- from EventBase
 );

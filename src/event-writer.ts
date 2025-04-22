@@ -52,13 +52,14 @@ export class EventWriter implements IEventWriter {
             txhash,
 
             reservationId: args[index++],
-            ownerAddress: args[index++],
             positionId: args[index++],
+            ownerAddress: args[index++],
             amount: args[index++],
-            btcAddress: args[index++],
-            partialSettlement: args[index++]
+            isInscription: args[index++],
+            btcAddress: args[index++]
         });
     }
+
 
     private async reservationStateEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result) {
         let index = 0;
