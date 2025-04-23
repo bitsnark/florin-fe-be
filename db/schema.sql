@@ -31,6 +31,7 @@ CREATE TABLE position_created_events (
     original_amount BIGINT NOT NULL,
     bitcoin_address CHAR(66) NOT NULL,
     exchange_rate BIGINT NOT NULL,
+    partial_settlement BOOLEAN NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
     block_hash CHAR(66) NOT NULL           -- from EventBase
 );
@@ -89,6 +90,7 @@ CREATE TABLE bitcoin_txs (
     block_height INTEGER NOT NULL,
     target_chain_id CHARACTER VARYING NOT NULL,
     reservation_id CHARACTER VARYING NOT NULL,
+    position_id CHARACTER VARYING NOT NULL,
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (txid, block_hash)
 );

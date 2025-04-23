@@ -91,6 +91,7 @@ export class BitcoinTxFinder {
 				blockHeight: blockHeight,
 				targetChainId: reservation.chainId,
 				reservationId: reservation.reservationId,
+				positionId: reservation.positionId
 			})
 
 

@@ -55,7 +55,7 @@ describe("BitcoinTxFinder.scanBlock", () => {
 
 	it("should insert a transaction with matching amount and address - partial position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -76,7 +76,8 @@ describe("BitcoinTxFinder.scanBlock", () => {
 			blockHash: "blockHash",
 			blockHeight: 100,
 			targetChainId: 1,
-			reservationId: keccak256(Buffer.from("res1"))
+			reservationId: keccak256(Buffer.from("res1")),
+			positionId: 'pos1'
 		});
 	});
 
@@ -116,7 +117,7 @@ describe("BitcoinTxFinder.scanBlock", () => {
 	//-------------------------------------------------------------------
 	it("should insert a transaction if amount, address & inscription are matching - FULL position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -138,13 +139,14 @@ describe("BitcoinTxFinder.scanBlock", () => {
 			blockHash: "blockHash",
 			blockHeight: 100,
 			targetChainId: 1,
-			reservationId: keccak256(Buffer.from("res1"))
+			reservationId: keccak256(Buffer.from("res1")),
+			positionId: 'pos1'
 		});
 	});
 
 	it("should not insert a transaction if inscription, amount or address not matching - FULL position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({

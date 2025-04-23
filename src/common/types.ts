@@ -57,6 +57,10 @@ export interface PositionCreatedEvent extends EventBase {
     // 10^10 * Satoshis per Wei
     // 1:1 ≡ 10^10
     exchangeRate: bigint;
+
+
+    //full or partial flag
+    partialSettlement: boolean;
 }
 
 export interface PositionStateEvent

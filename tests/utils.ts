@@ -17,7 +17,8 @@ export async function createPosition(position: any) {
         exchangeRate: position.exchangeRate,
         blockNumber: fakeBlockNumber,
         blockHash: fakeBlockHash,
-        txhash: '0x00000'
+        txhash: '0x00000',
+        partialSettlement: position.partialSettlement
     });
 
     await eventsDb.positionStateChanged({

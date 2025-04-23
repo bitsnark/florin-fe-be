@@ -4,8 +4,8 @@ import { setApi, indexGreeting } from '../src/api/api';
 import { Finality, PositionState, ReservationState } from '../src/common/types';
 import { createPosition, createReservation } from './utils';
 
-const fakePositionId = `${Date.now()}`;
 
+let fakePositionId = `${Date.now()}`;
 const mockPosition = {
     positionId: fakePositionId,
     chainId: 'chain1',

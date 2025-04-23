@@ -6,8 +6,8 @@ export class EventsDb extends Db {
   async positionCreated(event: Exclude<PositionCreatedEvent, 'eventId'>): Promise<number> {
     const query = `
             INSERT INTO position_created_events
-            (position_id, chain_id, owner_address, token_address, original_amount, bitcoin_address, exchange_rate, block_number, block_hash, txhash)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            (position_id, chain_id, owner_address, token_address, original_amount, bitcoin_address, exchange_rate, block_number, block_hash, txhash, partial_settlement)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             ON CONFLICT (position_id) DO NOTHING
             RETURNING event_id
           `;
@@ -21,7 +21,8 @@ export class EventsDb extends Db {
       event.exchangeRate,
       event.blockNumber,
       event.blockHash,
-      event.txhash
+      event.txhash,
+      event.partialSettlement
     ]);
     return result.rows[0];
   }
