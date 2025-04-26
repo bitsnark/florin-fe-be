@@ -27,7 +27,7 @@ export class BlockScanner {
     async processNewBlocks() {
 
         let blockStart = config.blockStart;
-        const highest = await this.blockDb.getHighestBlock(config.chainId, Finality.FINAL);
+        const highest = await this.blockDb.getHighestBlock(config.chainId, true);
         if (highest) blockStart = highest.blockNumber + 1;
         const blockEnd = await this.provider.getBlockNumber();
 

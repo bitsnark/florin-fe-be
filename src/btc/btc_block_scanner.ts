@@ -21,7 +21,7 @@ export class BtcBlockScanner {
 	async processNewBlocks() {
 
 		let blockStart = config.btcBlockStart;
-		const highest = await this.blockDb.getHighestBlock(config.btcChainId, Finality.UNKNOWN);
+		const highest = await this.blockDb.getHighestBlock(config.btcChainId);
 		if (highest) blockStart = highest.blockNumber + 1;
 		const blockEnd = await this.btcProvider.getBlockCount();
 

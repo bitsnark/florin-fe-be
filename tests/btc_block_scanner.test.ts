@@ -46,7 +46,7 @@ describe('BtcBlockScanner', () => {
 
 			await btcBlockScanner.processNewBlocks();
 
-			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId, Finality.UNKNOWN);
+			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId);
 			expect(bitcoinNodeMock.getBlockCount).toHaveBeenCalled();
 			expect(bitcoinNodeMock.getBlockHash).toHaveBeenCalledTimes(5);
 			expect(bitcoinNodeMock.getBlock).toHaveBeenCalledTimes(5);
