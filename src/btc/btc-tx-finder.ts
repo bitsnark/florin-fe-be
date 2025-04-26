@@ -75,13 +75,13 @@ export class BitcoinTxFinder {
 			// A partial position btc transaction is identified by the address and amount
 			// A full position btc transaction is identified by the op_return data as well
 			if (reservation.isInscription) {
-				const vNonce = tx.vout.find(
+				const vInscription = tx.vout.find(
 					(v: any) => {
 						if (!v.scriptPubKey || !v.scriptPubKey.hex) return false;
 						return reservation.inscription === '0x' + v.scriptPubKey.hex.slice(4)
 					}
 				);
-				if (!vNonce) continue
+				if (!vInscription) continue
 			}
 
 

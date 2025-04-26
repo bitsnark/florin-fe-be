@@ -19,6 +19,7 @@ export interface IConfig {
     providerUrl: string;
     chainId: number;
     contractAddress: string;
+    updateContractEndPoint: string;
     finalityBlocks: number;
     loopIntervalMs: number;
 
@@ -31,6 +32,9 @@ export interface IConfig {
 
     httpPort: number;
     httpsPort: number;
+
+    btcMaxAllowedTransfer: number;
+    evmMaxAllowedTransfer: number;
 }
 
 export const config: IConfig = {
@@ -47,6 +51,7 @@ export const config: IConfig = {
     providerUrl: parse.string('PROVIDER_URL', ''), //https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
     chainId: parse.integer('CHAIN_ID', 31337),
     contractAddress: parse.string('CONTRACT_ADDRESS', '0x000000'),
+    updateContractEndPoint: parse.string('UPDATE_CONTRACT_END_POINT', 'http://localhost:3000/'),
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
 
@@ -58,5 +63,8 @@ export const config: IConfig = {
     btcNodeHost: parse.string('BTC_NODE_HOST', ''),
 
     httpPort: parse.integer('HTTP_PORT', 800),
-    httpsPort: parse.integer('HTTPS_PORT', 4430)
+    httpsPort: parse.integer('HTTPS_PORT', 4430),
+    btcMaxAllowedTransfer: parse.integer('BTC_MAX_ALLOWED_TRANSFER', 0.5),
+    evmMaxAllowedTransfer: parse.integer('EVM_MAX_ALLOWED_TRANSFER', 5000000),
+
 }

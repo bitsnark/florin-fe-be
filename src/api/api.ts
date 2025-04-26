@@ -73,9 +73,12 @@
 
 import { MaterializedPosition } from '../db/materlialized-position';
 import { MaterializedReservation } from '../db/materialized-reservation';
+import { MaterializedHistory } from '../db/materialized-history';
 import { Express } from 'express';
 import { ReservationState } from '../common/types';
 import { jsonStringifyCustom } from '../common/json';
+import { getBalances } from '../balance-fetcher';
+import { openPosition } from '../position-opener';
 
 
 export const indexGreeting = 'This is the Florin API index';
@@ -84,6 +87,7 @@ export function setApi(app: Express) {
 
     const materializedPosition = new MaterializedPosition();
     const materializedReservation = new MaterializedReservation();
+    const materializedHistory = new MaterializedHistory();
 
     // sanity
     app.get('/', (req, res): void => {
@@ -193,38 +197,50 @@ export function setApi(app: Express) {
         }
     });
 
-    app.get('/getHistory/:id', async (req, res) => {
+    app.get('/history/:address', async (req, res) => {
         const finalityFlag = !!req.query.finalityFlag;
-        const { id } = req.params;
-        if (!id) {
-            res.status(400).send('ID is required');
+
+        const { address } = req.params;
+        if (!address) {
+            res.status(400).send('address is required');
             return;
         }
         try {
-            // const ret = await materializedPosition.getPositionsByOwner(id, finalityFlag);
-            const ret = [{
-                origin_chain_id: 1,
-                target_chain_id: 2,
-                registraction_txid: '0x1234567890abcdef',
-                amount: 100,
-                origin_chain_txid: '0xabcdef1234567890',
-                target_chain_txid: '0xabcdef1234567890',
-                regitrattio_time: 1234567890,
-                status: 'PENDING'
+            const history = await materializedHistory.getOwnerHistory(address, finalityFlag)
+            if (history) res.send(jsonStringifyCustom(history));
+        } catch (e) {
+            console.error(e);
+            res.status(500).send('Internal Server Error');
+        }
+    });
 
-            },
-            {
-                origin_chain_id: 2,
-                target_chain_id: 1,
-                registraction_txid: '0x1234567890abcdef',
-                amount: 10,
-                origin_chain_txid: '0xabcdef1234567890',
-                target_chain_txid: '0xabcdef1234567890',
-                regitrattio_time: 1234567890,
-                status: 'COMPLETED'
+    app.get('/limits', async (req, res) => {
+        try {
+            const balances = await getBalances();
+            if (balances) res.send(jsonStringifyCustom(history));
 
-            }]
-            if (ret) res.send(jsonStringifyCustom(ret));
+        } catch (e) {
+            console.error(e);
+            res.status(500).send('Internal Server Error');
+        }
+    });
+
+    app.post('/openPosition', async (req, res) => {
+        try {
+            const { openPositionData } = req.body;
+            if (!openPositionData) {
+                res.status(400).send('openPositionData is required');
+                return;
+            }
+
+            const posId = openPosition(openPositionData);
+
+            if (posId) {
+                res.send(jsonStringifyCustom(posId));
+            } else {
+                res.status(404).send('Item not found');
+            }
+
         } catch (e) {
             console.error(e);
             res.status(500).send('Internal Server Error');

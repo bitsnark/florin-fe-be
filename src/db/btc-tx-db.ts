@@ -1,6 +1,6 @@
 import { Db } from "./db";
 
-export interface reservationBtcTx {
+export interface ReservationBtcTx {
   txid: string;
   blockHash: string;
   blockHeight: number;
@@ -11,7 +11,7 @@ export interface reservationBtcTx {
 
 export class BtcTxDb extends Db {
 
-  async insertTx(tx: reservationBtcTx): Promise<void> {
+  async insertTx(tx: ReservationBtcTx): Promise<void> {
     const query = `
         INSERT INTO blocks (txid, block_hash, block_height, target_chain_id, reservation_id, position_id)
         VALUES ($1, $2, $3, $4, $5, $6)

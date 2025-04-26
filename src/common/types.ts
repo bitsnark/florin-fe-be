@@ -103,7 +103,7 @@ export interface ReservationCreatedEvent extends EventBase {
 
 
     // Partial settlement flag for connected position
-    isInscription?: boolean;
+    isInscription: boolean;
 }
 
 export interface ReservationStateEvent

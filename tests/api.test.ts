@@ -134,4 +134,11 @@ describe('API Endpoints', () => {
             expect(response.text).toBe('Internal Server Error');
         });
     });
+
+    describe('GET /history', () => {
+        it('should find data for existing address', async () => {
+            const response = await request(app).get('/history/0xOwner');
+            expect(response.status).toBe(200);
+        });
+    })
 });

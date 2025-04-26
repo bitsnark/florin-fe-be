@@ -31,10 +31,11 @@ export class MaterializedHistory extends Db {
     async getOwnerHistory(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
         const positions = await this.getOwnerPositionHistory(address, finalityFlag, limit);
         const reservations = await this.getOwnerReservationHistory(address, finalityFlag, limit);
-
+        console.log([...positions, ...reservations]);
         return [...positions, ...reservations];
     }
 
+    //----------------------------------------------------------------------------------------
     // Collect owner position history
     protected async getOwnerPositionHistory(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
         const positions = await this.getOwnerFullPosition(address, finalityFlag, limit);
@@ -64,12 +65,12 @@ export class MaterializedHistory extends Db {
             pc.chain_id as register_chain, pc.txhash as register_txhash,
             pc.block_hash as register_block_hash, finality
         FROM
-            position_created_events as pc, blocks
-        WHERE pc.block_hash = blocks.block_hash
+            position_created_events as pc, blocks as b
+        WHERE pc.block_hash = b.block_hash
             AND lower(owner_address)= lower($1)
             AND partial_settlement = false
             AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
-            ORDER BY pse.event_id DESC LIMIT $2
+            ORDER BY pc.event_id DESC LIMIT $2
     `
         const result = await this.query(query, [address, limit]);
 
@@ -88,17 +89,18 @@ export class MaterializedHistory extends Db {
 
     protected async getBtcTxsByPositions(positions: HistoryRecord[], finalityFlag?: boolean): Promise<HistoryRecord[]> {
         const query = `
-        SELECT bt.position_id,blocks.chain_id as receive_chain,
+        SELECT bt.position_id,b.chain_id as receive_chain,
             bt.txid as receive_txhash, bt.block_hash as receive_txhash, finality
         FROM
-            bitcoin_txs as bt , blocks
-        WHERE bt.block_hash = blocks.block_hash
-            AND position_id ANY($1)
-            AND blocks.chain_id=42
+            bitcoin_txs as bt , blocks as b
+        WHERE bt.block_hash = b.block_hash
+            AND position_id = ANY($1)
+            AND b.chain_id= $2
             AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
         `
 
-        const result = await this.query(query, [positions.map(p => p.position_id), config.btcChainId]);
+        const positionIds = positions.map(p => p.position_id);
+        const result = await this.query(query, [positionIds, config.btcChainId]);
         if (result.rows.length < 1) return [];
         return result.rows.map(r => ({
             position_id: r.position_id,
@@ -135,12 +137,12 @@ export class MaterializedHistory extends Db {
     protected async getOwnerCreatedReservations(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
         const query = `
         SELECT
-            reservation_id, amount, btc_address, owner_address
-            blocks.chain_id as register_chain, rc.txhash as register_txhash,
+            reservation_id, amount, btc_address, owner_address,
+            b.chain_id as register_chain, rc.txhash as register_txhash,
             rc.block_hash as register_block_hash, finality
         FROM
-            reservation_created_events as rc, blocks
-        WHERE rc.block_hash = blocks.block_hash
+            reservation_created_events as rc, blocks as b
+        WHERE rc.block_hash = b.block_hash
             AND lower(owner_address)= lower($1)
             AND is_inscription = false
             AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
@@ -165,15 +167,15 @@ export class MaterializedHistory extends Db {
         const query = `
         SELECT bt.position_id,
             reservation_id,
-            blocks.chain_id as pay_chain,
+            b.chain_id as pay_chain,
             bt.txid as pay_txhash,
             bt.block_hash as pay_txhash,
             finality
         FROM
-            bitcoin_txs as bt , blocks
-        WHERE bt.block_hash = blocks.block_hash
-            AND reservation_id any ($1)
-            AND blocks.chain_id=$2
+            bitcoin_txs as bt , blocks as b
+        WHERE bt.block_hash = b.block_hash
+            AND reservation_id = ANY ($1)
+            AND b.chain_id=$2
             AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
             `
         const result = await this.query(query, [reservations.map(r => r.reservation_id), config.btcChainId, config.btcChainId]);
@@ -191,15 +193,15 @@ export class MaterializedHistory extends Db {
     protected async getReservationLastStatus(positionId: string, finalityFlag?: boolean): Promise<HistoryRecord[]> {
         const query = `
         SELECT rs.state,
-            blocks.chain_id as receive_chain,
+            b.chain_id as receive_chain,
             rs.txhash as receive_txhash,
             rs.block_hash as receive_block_hash,
             finality
-        FROM reservation_state_events as rs, blocks
-        WHERE rs.block_hash = blocks.block_hash
+        FROM reservation_state_events as rs, blocks as b
+        WHERE rs.block_hash = b.block_hash
             AND reservation_id in ('reservation1')
             AND rs.state <> 'PENDING'
-            AND blocks.finality <> 'REVERTED'
+            AND b.finality <> 'REVERTED'
             `
         const result = await this.query(query, [positionId]);
         if (result.rows.length < 1) return [];
@@ -212,5 +214,6 @@ export class MaterializedHistory extends Db {
             receive_finality: r.finality
         }));
     }
+
 
 }
