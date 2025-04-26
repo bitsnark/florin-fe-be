@@ -8,15 +8,12 @@ import { Reservation } from "../common/types";
 import { convertBytes32ToP2TRAddress } from "../common/bech32";
 import { btcToSatoshi } from "../common/btc-utils";
 
-const notFound = -1;
-
 
 export function calculateInscription(chainId: string, id: string): string {
 	const coder = new AbiCoder();
 	const encoded = coder.encode(["uint256", "uint256"], [chainId, id]);
 	return keccak256(encoded);
 }
-
 
 interface ReservationWithInscription extends Reservation {
 	inscription?: string;

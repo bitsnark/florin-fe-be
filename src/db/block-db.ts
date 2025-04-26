@@ -6,7 +6,7 @@ export interface IBlockDb {
   getByHash(blockHash: string): Promise<Block | null>;
   updateFinality(blockHash: string, finality: Finality);
   getBlocksByFinality(chainId: number, finality: Finality): Promise<Block[]>;
-  getHighestBlock(chainId: number, finality: Finality): Promise<Block>;
+  getHighestBlock(chainId: number, finalityFlag?: boolean): Promise<Block>;
 }
 
 export class BlockDb extends Db implements IBlockDb {
@@ -60,13 +60,14 @@ export class BlockDb extends Db implements IBlockDb {
     }));
   }
 
-  async getHighestBlock(chainId: number, finality: Finality): Promise<Block> {
+  async getHighestBlock(chainId: number, finalityFlag?: boolean): Promise<Block> {
     const query = `
     SELECT * FROM blocks
-    WHERE finality = $1 AND chain_id = $2
+    WHERE chain_id = $1
+    AND ${finalityFlag ? "blocks.finality = 'FINAL'" : "blocks.finality <> 'REVERTED'"}
     ORDER BY block_number DESC LIMIT 1
-    `;
-    const result = await this.query(query, [finality, chainId]);
+      `;
+    const result = await this.query(query, [chainId]);
     if (result.rows.length < 1) return null;
     const row = result.rows[0];
     return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };

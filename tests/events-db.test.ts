@@ -1,5 +1,5 @@
 import { EventsDb } from '../src/db/events-db';
-import { Finality, PositionCreatedEvent, PositionState, PositionStateEvent, ReservationCreatedEvent, ReservationState, ReservationStateEvent } from '../src/common/types';
+import { PositionCreatedEvent, PositionState, PositionStateEvent, ReservationCreatedEvent, ReservationState, ReservationStateEvent } from '../src/common/types';
 import { describe, beforeEach, it, expect } from '@jest/globals';
 
 const fakePositionId = `${Date.now()}`;
@@ -69,7 +69,8 @@ describe('EventsDb', () => {
                 blockNumber: 12345,
                 blockHash: '0xBlockHash',
                 txhash: '0x000000',
-                btcAddress: '1BitcoinAddress'
+                btcAddress: '1BitcoinAddress',
+                isInscription: true
             };
 
             const eventId = await eventsDb.reservationCreated(event);

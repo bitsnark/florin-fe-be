@@ -91,7 +91,7 @@ describe("BlockScanner", () => {
 
             await blockScanner.processNewBlocks();
 
-            expect(blockDb.getHighestBlock).toHaveBeenCalledWith(config.chainId, Finality.FINAL);
+            expect(blockDb.getHighestBlock).toHaveBeenCalledWith(config.chainId, true);
             expect(provider.getBlockNumber).toHaveBeenCalled();
             for (let blockNumber = 6; blockNumber <= currentBlockNumber; blockNumber++) {
                 expect(provider.getBlockByHeight).toHaveBeenCalledWith(blockNumber);

@@ -1,4 +1,4 @@
 
 export function btcToSatoshi(btcAmount: number): number {
-	return Math.round(btcAmount * 100000000);
+	return Math.floor(btcAmount * 100000000);
 }
