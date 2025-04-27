@@ -20,6 +20,7 @@ export interface HistoryRecord {
     receive_txhash?: string;
     receive_block_hash?: string;
     receive_finality?: Finality;
+    state?: string;
 }
 
 export class MaterializedHistory extends Db {
@@ -44,7 +45,7 @@ export class MaterializedHistory extends Db {
         const btcTxs = await this.getBtcTxsByPositions(positions, finalityFlag);
 
         const result: HistoryRecord[] = positions.map(p => {
-            const btcTx = btcTxs.find(b => b.position_id === p.position_id);
+            const btcTx = btcTxs.find(b => b.position_id === p.position_id.trim());
             return {
                 ...p,
                 pay_chain: p.register_chain,
@@ -90,7 +91,7 @@ export class MaterializedHistory extends Db {
     protected async getBtcTxsByPositions(positions: HistoryRecord[], finalityFlag?: boolean): Promise<HistoryRecord[]> {
         const query = `
         SELECT bt.position_id,b.chain_id as receive_chain,
-            bt.txid as receive_txhash, bt.block_hash as receive_txhash, finality
+            bt.txid as receive_txhash, bt.block_hash as receive_block_hash, finality
         FROM
             bitcoin_txs as bt , blocks as b
         WHERE bt.block_hash = b.block_hash
@@ -99,7 +100,7 @@ export class MaterializedHistory extends Db {
             AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
         `
 
-        const positionIds = positions.map(p => p.position_id);
+        const positionIds = positions.map(p => p.position_id.trim());
         const result = await this.query(query, [positionIds, config.btcChainId]);
         if (result.rows.length < 1) return [];
         return result.rows.map(r => ({
