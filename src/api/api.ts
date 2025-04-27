@@ -77,7 +77,7 @@ import { MaterializedHistory } from '../db/materialized-history';
 import { Express } from 'express';
 import { ReservationState } from '../common/types';
 import { jsonStringifyCustom } from '../common/json';
-import { getBalances } from '../balance-fetcher';
+import { BalanceFetcher } from '../balance-fetcher';
 import { openPosition } from '../position-opener';
 
 
@@ -88,6 +88,7 @@ export function setApi(app: Express) {
     const materializedPosition = new MaterializedPosition();
     const materializedReservation = new MaterializedReservation();
     const materializedHistory = new MaterializedHistory();
+    const balanceFetcher = BalanceFetcher.create();
 
     // sanity
     app.get('/', (req, res): void => {
@@ -216,7 +217,7 @@ export function setApi(app: Express) {
 
     app.get('/limits', async (req, res) => {
         try {
-            const balances = await getBalances();
+            const balances = await balanceFetcher.getBalances();
             if (balances) res.send(jsonStringifyCustom(history));
 
         } catch (e) {

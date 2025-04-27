@@ -9,7 +9,7 @@ describe('History API Test', () => {
 	let historyDb = new MaterializedHistory();
 	let evmBlock0, evmBlock1, evmBlock2, btcBlock0;
 
-	const ownerAddress = `0xevmOwnerAdd${Date.now()}`;
+	const ownerAddress = '0xevmOwnerAddress';
 
 	beforeAll(async () => {
 		// Step 1: Get the highest block for chain 1 and chain 10011
@@ -93,10 +93,9 @@ describe('History API Test', () => {
 		});
 
 		// Step 7: Test the history API
-		const history = await historyDb.getOwnerHistory(ownerAddress, false, 2);
+		const history = await historyDb.getOwnerHistory(ownerAddress, false, 1);
 
-		const record = history.find(r => r.reservation_id.trim() === fakeReservationId);
-		console.log('History Record res:', record);
+		const record = history.find(r => r.reservation_id && r.reservation_id.trim() === fakeReservationId);
 
 		expect(record).toBeTruthy();
 		expect(record.reservation_id.trim()).toBe(fakeReservationId);
@@ -152,10 +151,9 @@ describe('History API Test', () => {
 		});
 
 		// Step 5: Test the history API
-		const history = await historyDb.getOwnerHistory(ownerAddress, false, 2);
+		const history = await historyDb.getOwnerHistory(ownerAddress, false, 1);
 
-		const record = history.find(r => r.position_id.trim() === fakePositionId);
-		console.log('History Record pos:', record);
+		const record = history.find(r => r.position_id && r.position_id.trim() === fakePositionId);
 
 		expect(record).toBeTruthy();
 		expect(record.position_id.trim()).toBe(fakePositionId);

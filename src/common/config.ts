@@ -46,11 +46,11 @@ export const config: IConfig = {
     postgresPassword: parse.string('POSTGRES_PASSWORD', '1234'),
     postgresKeepAlive: parse.boolean('POSTGRES_KEEP_ALIVE', true),
 
-    mmPositionId: parse.string('MM_POSITION_ID', '0x000000'),
+    mmPositionId: parse.string('MM_POSITION_ID', '1745750236411                                                     '),
     blockStart: parse.integer('BLOCK_START', 0),
-    providerUrl: parse.string('PROVIDER_URL', ''), //https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+    providerUrl: parse.string('PROVIDER_URL', 'localhost:8545'),
     chainId: parse.integer('CHAIN_ID', 31337),
-    contractAddress: parse.string('CONTRACT_ADDRESS', '0x000000'),
+    contractAddress: parse.string('CONTRACT_ADDRESS', '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'),
     updateContractEndPoint: parse.string('UPDATE_CONTRACT_END_POINT', 'http://localhost:3000/'),
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),

@@ -3,32 +3,39 @@ import { ethers } from 'ethers';
 import * as AMMExchangeABI from "./abis/AMMExchange.json";
 
 
-export async function getBalances() {
-	const btcAvailable = await checkBtcAvilable();
-	const evmAvailable = await checkEvmAvailable();
+export class BalanceFetcher {
+	exchange: ethers.Contract;
 
-	return {
-		btc: btcAvailable,
-		eth: evmAvailable
+	constructor() { }
+
+	static create() {
+		const bf = new BalanceFetcher();
+		const provider = new ethers.JsonRpcProvider(config.providerUrl);
+		bf.exchange = new ethers.Contract(config.contractAddress, AMMExchangeABI.abi, provider);
+		return bf;
 	}
-}
 
-async function checkBtcAvilable() {
-	// Temporery - to be replaced with a real call
-	return { available: config.btcMaxAllowedTransfer };
-}
+	private async getBtcAvailable() {
+		// Temporery - to be replaced with a real call
+		return { available: config.btcMaxAllowedTransfer };
+	}
 
-async function checkEvmAvailable() {
-	// Temporery - to be replaced with a real call
-	//return config.btcMaxAllowedTransfer;
+	private async getEvmAvailable() {
+		const position = await this.exchange.positions[config.mmPositionId]
 
-	const provider = new ethers.JsonRpcProvider(config.providerUrl);
-	const exchange = new ethers.Contract(config.contractAddress, AMMExchangeABI, provider);
+		return {
+			position: config.mmPositionId,
+			available: position.available < config.evmMaxAllowedTransfer ? position.available : config.evmMaxAllowedTransfer
+		}
+	}
 
-	const position = await exchange.positions[config.mmPositionId]
+	async getBalances() {
+		const btcAvailable = await this.getBtcAvailable();
+		const evmAvailable = await this.getEvmAvailable();
 
-	return {
-		position: config.mmPositionId,
-		available: position.available < config.evmMaxAllowedTransfer ? position.available : config.evmMaxAllowedTransfer
+		return {
+			btc: btcAvailable,
+			eth: evmAvailable
+		}
 	}
 }

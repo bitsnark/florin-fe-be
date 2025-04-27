@@ -32,7 +32,7 @@ export class MaterializedHistory extends Db {
     async getOwnerHistory(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
         const positions = await this.getOwnerPositionHistory(address, finalityFlag, limit);
         const reservations = await this.getOwnerReservationHistory(address, finalityFlag, limit);
-        console.log([...positions, ...reservations]);
+
         return [...positions, ...reservations];
     }
 
@@ -122,7 +122,7 @@ export class MaterializedHistory extends Db {
         const ReservationsStatus = await this.getReservationLastStatus(reservations, finalityFlag);
 
         const result: HistoryRecord[] = reservations.map(r => {
-            const btcTx = payments.find(p => p.position_id === r.position_id);
+            const btcTx = payments.find(p => p.reservation_id === r.reservation_id.trim());
             const rs = ReservationsStatus.find(rs => rs.reservation_id === r.reservation_id);
 
             return {
