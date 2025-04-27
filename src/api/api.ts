@@ -77,6 +77,7 @@ import { Express } from 'express';
 import { ReservationState } from '../common/types';
 import { jsonStringifyCustom } from '../common/json';
 
+
 export const indexGreeting = 'This is the Florin API index';
 
 export function setApi(app: Express) {
@@ -191,4 +192,43 @@ export function setApi(app: Express) {
             res.status(500).send('Internal Server Error');
         }
     });
+
+    app.get('/getHistory/:id', async (req, res) => {
+        const finalityFlag = !!req.query.finalityFlag;
+        const { id } = req.params;
+        if (!id) {
+            res.status(400).send('ID is required');
+            return;
+        }
+        try {
+            // const ret = await materializedPosition.getPositionsByOwner(id, finalityFlag);
+            const ret = [{
+                origin_chain_id: 1,
+                target_chain_id: 2,
+                registraction_txid: '0x1234567890abcdef',
+                amount: 100,
+                origin_chain_txid: '0xabcdef1234567890',
+                target_chain_txid: '0xabcdef1234567890',
+                regitrattio_time: 1234567890,
+                status: 'PENDING'
+
+            },
+            {
+                origin_chain_id: 2,
+                target_chain_id: 1,
+                registraction_txid: '0x1234567890abcdef',
+                amount: 10,
+                origin_chain_txid: '0xabcdef1234567890',
+                target_chain_txid: '0xabcdef1234567890',
+                regitrattio_time: 1234567890,
+                status: 'COMPLETED'
+
+            }]
+            if (ret) res.send(jsonStringifyCustom(ret));
+        } catch (e) {
+            console.error(e);
+            res.status(500).send('Internal Server Error');
+        }
+    });
+
 }

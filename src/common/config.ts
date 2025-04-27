@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: ['.env.test', '.env.local', '.env'] });
 
+
+
 export interface IConfig {
 
     postgresUser: string;
@@ -12,12 +14,20 @@ export interface IConfig {
     postgresPassword: string;
     postgresKeepAlive: boolean;
 
+    mmPositionId: string;
     blockStart: number;
     providerUrl: string;
     chainId: number;
     contractAddress: string;
     finalityBlocks: number;
     loopIntervalMs: number;
+
+    btcChainId: number,
+    btcBlockStart: number,
+    btcFinalityBlocks: number;
+    btcNodeUsername: string,
+    btcNodePassword: string,
+    btcNodeHost: string,
 
     httpPort: number;
     httpsPort: number;
@@ -32,12 +42,20 @@ export const config: IConfig = {
     postgresPassword: parse.string('POSTGRES_PASSWORD', '1234'),
     postgresKeepAlive: parse.boolean('POSTGRES_KEEP_ALIVE', true),
 
+    mmPositionId: parse.string('MM_POSITION_ID', '0x000000'),
     blockStart: parse.integer('BLOCK_START', 0),
-    providerUrl: parse.string('PROVIDER_URL', 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'),
-    chainId: parse.integer('CHAIN_ID', 20002),
+    providerUrl: parse.string('PROVIDER_URL', ''), //https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+    chainId: parse.integer('CHAIN_ID', 31337),
     contractAddress: parse.string('CONTRACT_ADDRESS', '0x000000'),
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
+
+    btcChainId: parse.integer('BTC_CHAIN_ID', 100011),
+    btcBlockStart: parse.integer('BTC_BLOCK_START', 0),
+    btcFinalityBlocks: parse.integer('BTC_FINALITY_BLOCKS', 6),
+    btcNodeUsername: parse.string('BTC_NODE_USERNAME', ''),
+    btcNodePassword: parse.string('BTC_NODE_PASSWORD', ''),
+    btcNodeHost: parse.string('BTC_NODE_HOST', ''),
 
     httpPort: parse.integer('HTTP_PORT', 800),
     httpsPort: parse.integer('HTTPS_PORT', 4430)

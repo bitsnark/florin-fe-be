@@ -20,14 +20,14 @@ export class BlockScanner {
     async processEvents(blockNumber: number, blockHash: string) {
         const parsedLogs = await this.provider.getParsedLogs(blockNumber);
         for (const log of parsedLogs) {
-            await this.eventWriter.parseEvent(blockNumber, blockHash, log);
+            await this.eventWriter.parseEvent(blockNumber, blockHash, log.txhash, log);
         }
     }
 
     async processNewBlocks() {
 
         let blockStart = config.blockStart;
-        const highest = await this.blockDb.getHighestFinalBlock(config.chainId);
+        const highest = await this.blockDb.getHighestBlock(config.chainId, true);
         if (highest) blockStart = highest.blockNumber + 1;
         const blockEnd = await this.provider.getBlockNumber();
 

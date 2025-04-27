@@ -16,8 +16,10 @@ export interface Block {
     finality: Finality;
 }
 
+
 export interface EventBase {
     eventId?: number;
+    txhash: string; // hex string
     blockNumber: number;
     blockHash: string; // hex string
 }
@@ -90,6 +92,14 @@ export interface ReservationCreatedEvent extends EventBase {
     // Number of tokens to hold
     // 10^18 precision
     amount: bigint;
+
+    // Bitcoin address where BTC is to be sent
+    // 32 bytes, hex string
+    btcAddress: string;
+
+
+    // Partial settlement flag for connected position
+    isInscription: boolean;
 }
 
 export interface ReservationStateEvent
@@ -98,6 +108,6 @@ export interface ReservationStateEvent
     state: ReservationState;
 }
 
-export interface Reservation extends ReservationCreatedEvent, ReservationStateEvent, Pick<Block, 'finality'> {
+export interface Reservation extends ReservationCreatedEvent, ReservationStateEvent, Pick<Block, 'finality' | 'chainId'> {
 }
 

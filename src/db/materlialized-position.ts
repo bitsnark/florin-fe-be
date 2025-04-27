@@ -13,7 +13,8 @@ function rowToPosition(row: any): Position {
         exchangeRate: row.exchange_rate,
         blockNumber: row.block_number,
         blockHash: row.block_hash,
-        finality: row.finality
+        finality: row.finality,
+        txhash: row.txhash
     };
 }
 

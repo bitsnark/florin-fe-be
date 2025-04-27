@@ -19,7 +19,7 @@ describe("BlockScanner", () => {
 
     beforeEach(() => {
         blockDb = {
-            getHighestFinalBlock: jest.fn(),
+            getHighestBlock: jest.fn(),
             create: jest.fn(),
             getBlocksByFinality: jest.fn(),
             updateFinality: jest.fn(),
@@ -43,15 +43,19 @@ describe("BlockScanner", () => {
         it("should process parsed logs and call eventWriter.parseEvent", async () => {
             const blockNumber = 1;
             const blockHash = "0x123";
+            const txhash = "0xabc";
+
             const logs = [
                 {
                     name: "event1",
                     topic: "topic1",
+                    txhash: "0xabc",
                     args: []
                 },
                 {
                     name: "event2",
                     topic: "topic2",
+                    txhash: "0xabc",
                     args: []
                 },
             ];
@@ -67,6 +71,7 @@ describe("BlockScanner", () => {
                     index + 1,
                     blockNumber,
                     blockHash,
+                    txhash,
                     log
                 );
             });
@@ -75,18 +80,18 @@ describe("BlockScanner", () => {
 
     describe("processNewBlocks", () => {
         it("should process new blocks and save them to the database", async () => {
-            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN };
+            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL };
             const currentBlockNumber = 10;
             const evmBlock = { hash: "0xabc" };
 
-            blockDb.getHighestFinalBlock.mockResolvedValue(highestFinalBlock);
+            blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);
             provider.getBlockNumber.mockResolvedValue(currentBlockNumber);
             provider.getBlockByHeight.mockResolvedValue(evmBlock as any);
             provider.getParsedLogs.mockResolvedValue([]);
 
             await blockScanner.processNewBlocks();
 
-            expect(blockDb.getHighestFinalBlock).toHaveBeenCalledWith(config.chainId);
+            expect(blockDb.getHighestBlock).toHaveBeenCalledWith(config.chainId, true);
             expect(provider.getBlockNumber).toHaveBeenCalled();
             for (let blockNumber = 6; blockNumber <= currentBlockNumber; blockNumber++) {
                 expect(provider.getBlockByHeight).toHaveBeenCalledWith(blockNumber);
@@ -103,7 +108,7 @@ describe("BlockScanner", () => {
             const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN };
             const currentBlockNumber = 10;
 
-            blockDb.getHighestFinalBlock.mockResolvedValue(highestFinalBlock);
+            blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);
             provider.getBlockNumber.mockResolvedValue(currentBlockNumber);
             provider.getBlockByHeight.mockResolvedValue(null);
 
