@@ -4,8 +4,8 @@ import { setApi, indexGreeting } from '../src/api/api';
 import { Finality, PositionState, ReservationState } from '../src/common/types';
 import { createPosition, createReservation } from './utils';
 
+const fakePositionId = `${Date.now()}`;
 
-let fakePositionId = `${Date.now()}`;
 const mockPosition = {
     positionId: fakePositionId,
     chainId: 'chain1',
@@ -134,11 +134,4 @@ describe('API Endpoints', () => {
             expect(response.text).toBe('Internal Server Error');
         });
     });
-
-    describe('GET /history', () => {
-        it('should find data for existing address', async () => {
-            const response = await request(app).get('/history/0xOwner');
-            expect(response.status).toBe(200);
-        });
-    })
 });

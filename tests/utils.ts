@@ -1,6 +1,7 @@
 import { EventsDb } from "../src/db/events-db";
 import { BlockDb } from '../src/db/block-db';
 import { Finality } from "../src/common/types";
+import { BtcTxDb } from "../src/db/btc-tx-db";
 
 const fakeBlockHash = '1234';
 const fakeBlockNumber = 1234;
@@ -15,24 +16,19 @@ export async function createPosition(position: any) {
         originalAmount: position.originalAmount,
         bitcoinAddress: position.bitcoinAddress,
         exchangeRate: position.exchangeRate,
-        blockNumber: fakeBlockNumber,
-        blockHash: fakeBlockHash,
-        txhash: '0x00000',
+        blockNumber: position.blockNumber ? position.blockNumber : fakeBlockNumber,
+        blockHash: position.blockHash ? position.blockHash : fakeBlockHash,
+        txhash: '0x00000CreatePos' + position.positionId,
         partialSettlement: position.partialSettlement
     });
 
-    await eventsDb.positionStateChanged({
-        positionId: position.positionId,
-        state: position.state,
-        blockNumber: fakeBlockNumber,
-        blockHash: fakeBlockHash,
-        txhash: '0x00000'
-    });
+    await positionStateChanged(position)
+
     const blockDb = new BlockDb();
     await blockDb.create({
         blockHash: fakeBlockHash,
         chainId: position.chainId,
-        blockNumber: fakeBlockNumber,
+        blockNumber: position.blockNumber ? position.blockNumber : fakeBlockNumber,
         finality: Finality.FINAL,
     });
 }
@@ -43,18 +39,68 @@ export async function createReservation(reservation: any) {
         positionId: reservation.positionId,
         reservationId: reservation.reservationId,
         ownerAddress: reservation.ownerAddress,
-        blockNumber: fakeBlockNumber,
-        blockHash: fakeBlockHash,
+        blockNumber: reservation.blockNumber ? reservation.blockNumber : fakeBlockNumber,
+        blockHash: reservation.blockHash ? reservation.blockHash : fakeBlockHash,
         amount: reservation.amount,
-        txhash: '0x00000',
+        txhash: '0x00000createRes' + reservation.reservationId,
         btcAddress: reservation.btcAddress,
         isInscription: reservation.isInscription
     });
-    await eventsDb.reservationStateChanged({
-        reservationId: reservation.reservationId,
-        state: reservation.state,
-        blockNumber: fakeBlockNumber,
-        blockHash: fakeBlockHash,
-        txhash: '0x00000'
+    await reservationStateChanged(reservation);
+}
+
+export async function positionStateChanged(stateEvent: any) {
+    const eventsDb = new EventsDb();
+    await eventsDb.positionStateChanged({
+        positionId: stateEvent.positionId,
+        state: stateEvent.state,
+        blockNumber: stateEvent.blockNumber ? stateEvent.blockNumber : fakeBlockNumber,
+        blockHash: stateEvent.blockHash ? stateEvent.blockHash : fakeBlockHash,
+        txhash: '0x00000posStateEvent' + stateEvent.positionId
     });
+}
+
+export async function reservationStateChanged(stateEvent: any) {
+    const eventsDb = new EventsDb();
+    await eventsDb.reservationStateChanged({
+        reservationId: stateEvent.reservationId,
+        state: stateEvent.state,
+        blockNumber: stateEvent.blockNumber ? stateEvent.blockNumber : fakeBlockNumber,
+        blockHash: stateEvent.blockHash ? stateEvent.blockHash : fakeBlockHash,
+        txhash: '0x00000resStateEvent' + stateEvent.reservationId
+    });
+}
+
+
+export async function createBlock(block: any) {
+    const blockDb = new BlockDb();
+    await blockDb.create({
+        blockHash: block.blockHash,
+        chainId: block.chainId,
+        blockNumber: block.blockNumber ? block.blockNumber : fakeBlockNumber,
+        finality: Finality.FINAL,
+    });
+
+}
+
+export interface ReservationBtcTx {
+    txid: string;
+    blockHash: string;
+    blockHeight: number;
+    targetChainId: number;
+    reservationId: string;
+    positionId: string;
+}
+
+export async function createBtcTx(btcTx: any) {
+    const btcTxDb = new BtcTxDb()
+    await btcTxDb.insertTx({
+        txid: btcTx.txid,
+        blockHash: btcTx.blockHash,
+        blockHeight: btcTx.blockNumber,
+        targetChainId: btcTx.targetChainId,
+        reservationId: btcTx.reservationId,
+        positionId: btcTx.positionId
+    });
+
 }

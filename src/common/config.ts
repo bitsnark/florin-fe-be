@@ -55,7 +55,7 @@ export const config: IConfig = {
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
 
-    btcChainId: parse.integer('BTC_CHAIN_ID', 100011),
+    btcChainId: parse.integer('BTC_CHAIN_ID', 10011),
     btcBlockStart: parse.integer('BTC_BLOCK_START', 0),
     btcFinalityBlocks: parse.integer('BTC_FINALITY_BLOCKS', 6),
     btcNodeUsername: parse.string('BTC_NODE_USERNAME', ''),

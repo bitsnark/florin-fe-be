@@ -13,7 +13,7 @@ export class BtcTxDb extends Db {
 
   async insertTx(tx: ReservationBtcTx): Promise<void> {
     const query = `
-        INSERT INTO blocks (txid, block_hash, block_height, target_chain_id, reservation_id, position_id)
+        INSERT INTO bitcoin_txs (txid, block_hash, block_height, target_chain_id, reservation_id, position_id)
         VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (txid, block_hash) DO NOTHING
       `;

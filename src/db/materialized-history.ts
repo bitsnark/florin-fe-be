@@ -116,12 +116,12 @@ export class MaterializedHistory extends Db {
         const reservations = await this.getOwnerCreatedReservations(address, finalityFlag, limit);
         if (reservations.length < 1) return [];
 
-        const payments = await this.getBtcTxsByPositions(reservations, finalityFlag);
+        const payments = await this.getOwnerBtcTransactions(reservations, finalityFlag);
 
-        const ReservationsStatus = await this.getReservationLastStatus(reservations[0].reservation_id, finalityFlag);
+        const ReservationsStatus = await this.getReservationLastStatus(reservations, finalityFlag);
 
         const result: HistoryRecord[] = reservations.map(r => {
-            const btcTx = payments.find(b => b.position_id === r.position_id);
+            const btcTx = payments.find(p => p.position_id === r.position_id);
             const rs = ReservationsStatus.find(rs => rs.reservation_id === r.reservation_id);
 
             return {
@@ -169,7 +169,7 @@ export class MaterializedHistory extends Db {
             reservation_id,
             b.chain_id as pay_chain,
             bt.txid as pay_txhash,
-            bt.block_hash as pay_txhash,
+            bt.block_hash as pay_block_hash,
             finality
         FROM
             bitcoin_txs as bt , blocks as b
@@ -178,7 +178,7 @@ export class MaterializedHistory extends Db {
             AND b.chain_id=$2
             AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
             `
-        const result = await this.query(query, [reservations.map(r => r.reservation_id), config.btcChainId, config.btcChainId]);
+        const result = await this.query(query, [reservations.map(r => r.reservation_id.trim()), config.btcChainId]);
         if (result.rows.length < 1) return [];
         return result.rows.map(r => ({
             reservation_id: r.reservation_id,
@@ -190,20 +190,21 @@ export class MaterializedHistory extends Db {
 
     }
 
-    protected async getReservationLastStatus(positionId: string, finalityFlag?: boolean): Promise<HistoryRecord[]> {
+    protected async getReservationLastStatus(reservations: HistoryRecord[], finalityFlag?: boolean): Promise<HistoryRecord[]> {
         const query = `
         SELECT rs.state,
+            rs.reservation_id,
             b.chain_id as receive_chain,
             rs.txhash as receive_txhash,
             rs.block_hash as receive_block_hash,
             finality
         FROM reservation_state_events as rs, blocks as b
         WHERE rs.block_hash = b.block_hash
-            AND reservation_id in ('reservation1')
+            AND reservation_id = ANY($1)
             AND rs.state <> 'PENDING'
-            AND b.finality <> 'REVERTED'
+            AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
             `
-        const result = await this.query(query, [positionId]);
+        const result = await this.query(query, [reservations.map(r => r.reservation_id.trim())]);
         if (result.rows.length < 1) return [];
         return result.rows.map(r => ({
             reservation_id: r.reservation_id,
