@@ -88,7 +88,7 @@ export function setApi(app: Express) {
     const materializedPosition = new MaterializedPosition();
     const materializedReservation = new MaterializedReservation();
     const materializedHistory = new MaterializedHistory();
-    const balanceFetcher = BalanceFetcher.create();
+    const balanceFetcher = new BalanceFetcher();
 
     // sanity
     app.get('/', (req, res): void => {
@@ -215,10 +215,11 @@ export function setApi(app: Express) {
         }
     });
 
+
     app.get('/limits', async (req, res) => {
         try {
             const balances = await balanceFetcher.getBalances();
-            if (balances) res.send(jsonStringifyCustom(history));
+            if (balances) res.json({ data: balances });
 
         } catch (e) {
             console.error(e);
@@ -226,18 +227,19 @@ export function setApi(app: Express) {
         }
     });
 
-    app.post('/openPosition', async (req, res) => {
+    app.post('/position', async (req, res) => {
         try {
-            const { openPositionData } = req.body;
-            if (!openPositionData) {
-                res.status(400).send('openPositionData is required');
+            const { forwardData } = req.body;
+            if (!forwardData) {
+                res.status(400).send('forwardData is required');
                 return;
             }
 
-            const posId = openPosition(openPositionData);
+            const posId = await openPosition(forwardData);
+
 
             if (posId) {
-                res.send(jsonStringifyCustom(posId));
+                res.json({ 'positionId': posId });
             } else {
                 res.status(404).send('Item not found');
             }

@@ -19,7 +19,7 @@ export interface IConfig {
     providerUrl: string;
     chainId: number;
     contractAddress: string;
-    updateContractEndPoint: string;
+    openPositionInListenerUrl: string;
     finalityBlocks: number;
     loopIntervalMs: number;
 
@@ -33,8 +33,8 @@ export interface IConfig {
     httpPort: number;
     httpsPort: number;
 
-    btcMaxAllowedTransfer: number;
-    evmMaxAllowedTransfer: number;
+    btcMaxAllowedSatTransfer: number;
+    evmMaxAllowedSatTransfer: number;
 }
 
 export const config: IConfig = {
@@ -51,11 +51,11 @@ export const config: IConfig = {
     providerUrl: parse.string('PROVIDER_URL', 'localhost:8545'),
     chainId: parse.integer('CHAIN_ID', 31337),
     contractAddress: parse.string('CONTRACT_ADDRESS', '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'),
-    updateContractEndPoint: parse.string('UPDATE_CONTRACT_END_POINT', 'http://localhost:3000/'),
+    openPositionInListenerUrl: parse.string('OPEN_POSITION_IN_LISTENER_URL', 'http://localhost:3000/open-position'),
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
 
-    btcChainId: parse.integer('BTC_CHAIN_ID', 10011),
+    btcChainId: parse.integer('BTC_CHAIN_ID', -1),
     btcBlockStart: parse.integer('BTC_BLOCK_START', 0),
     btcFinalityBlocks: parse.integer('BTC_FINALITY_BLOCKS', 6),
     btcNodeUsername: parse.string('BTC_NODE_USERNAME', ''),
@@ -64,7 +64,8 @@ export const config: IConfig = {
 
     httpPort: parse.integer('HTTP_PORT', 800),
     httpsPort: parse.integer('HTTPS_PORT', 4430),
-    btcMaxAllowedTransfer: parse.integer('BTC_MAX_ALLOWED_TRANSFER', 0.5),
-    evmMaxAllowedTransfer: parse.integer('EVM_MAX_ALLOWED_TRANSFER', 5000000),
+    btcMaxAllowedSatTransfer: parse.integer('BTC_MAX_ALLOWED_TRANSFER', 5000000),
+    evmMaxAllowedSatTransfer: parse.integer('EVM_MAX_ALLOWED_TRANSFER', 5000000),
+
 
 }

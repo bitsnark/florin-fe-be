@@ -57,7 +57,7 @@ export class BitcoinTxFinder {
 			let reservation: ReservationWithInscription;
 
 			// Find transactions sent to one of the pending reservations
-			const vAddress = tx.vout.find(
+			const outAddress = tx.vout.find(
 				(v: any) => {
 					if (!v.scriptPubKey || !v.scriptPubKey.address) return false;
 					const expectedAmount = rsvRows.get(v.scriptPubKey.address)?.amount;
@@ -65,20 +65,20 @@ export class BitcoinTxFinder {
 						btcToSatoshi(v.value) === Number(expectedAmount);
 				}
 			);
-			if (!vAddress) continue
-			reservation = rsvRows.get(vAddress.scriptPubKey.address);
+			if (!outAddress) continue
+			reservation = rsvRows.get(outAddress.scriptPubKey.address);
 
 			// If found check the type of the connected position's partial/full flag
 			// A partial position btc transaction is identified by the address and amount
 			// A full position btc transaction is identified by the op_return data as well
 			if (reservation.isInscription) {
-				const vInscription = tx.vout.find(
+				const outInscription = tx.vout.find(
 					(v: any) => {
 						if (!v.scriptPubKey || !v.scriptPubKey.hex) return false;
 						return reservation.inscription === '0x' + v.scriptPubKey.hex.slice(4)
 					}
 				);
-				if (!vInscription) continue
+				if (!outInscription) continue
 			}
 
 

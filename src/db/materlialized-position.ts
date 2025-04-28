@@ -33,64 +33,40 @@ export class MaterializedPosition extends Db {
     }
 
     async getPositionById(positionId: string, finalityFlag?: boolean): Promise<Position> {
-        const result = await this.getPositionByFilter({ positionId, isFinality: finalityFlag });
-
-        if (!result) return undefined;
-        return result[0];
-    }
-
-    async getPositionsByOwner(address: string, finalityFlag?: boolean, limit?: number): Promise<Position[]> {
-        return await this.getPositionByFilter({ address, isFinality: finalityFlag }, limit);
-    }
-
-    async getFullPositionsByOwner(address: string, finalityFlag?: boolean, limit?: number): Promise<Position[]> {
-        return await this.getPositionByFilter({ address, isFinality: finalityFlag, partialSettlement: false }, limit);
-    }
-
-    async getPositionByFilter(filter: PositionFilter, limit: number = 100): Promise<Position[]> {
-        let condition: string = '';
-        const params: any[] = [];
-
-        // Convert filter keys to SQL condition additions
-        for (const [k, v] of Object.entries(filter)) {
-            if (k === 'isFinality') {
-                condition = condition + ` AND ${v ? FilterKeysToFields(k) + " = 'FINAL'" : FilterKeysToFields(k) + " <> 'REVERTED'"
-                    }`
-            }
-
-            else if (k == 'positionId' || k == 'address') {
-                condition = condition + ` AND ${FilterKeysToFields(k)} = $${params.length + 1}`;
-                params.push(v);
-            }
-
-
-        }
-        params.push(limit);
-
-
-        function FilterKeysToFields(filterKey: string): string {
-            if (filterKey == 'positionId')
-                return 'position_created_events.position_id'
-            if (filterKey == 'address')
-                return 'position_created_events.owner_address'
-            if (filterKey == 'isFinality')
-                return 'blocks.finality'
-        }
-
         const query = `
         SELECT * FROM position_created_events, position_state_events, blocks
         WHERE
         position_created_events.position_id = position_state_events.position_id
+        AND position_created_events.position_id = $1
         AND
             ( position_state_events.block_hash = blocks.block_hash OR
              position_created_events.block_hash = blocks.block_hash )
-        ${condition}
-        ORDER BY position_state_events.event_id DESC LIMIT $${params.length}
+        AND ${finalityFlag ? "finality = 'FINAL'" : "finality <> 'REVERTED'"}
+        ORDER BY position_state_events.event_id DESC
         `;
-        const result = await this.query(query, params);
+        const result = await this.query(query, [positionId]);
+
+        if (!result) return undefined;
+        return result.rows[0];
+    }
+
+    async getPositionsByOwner(address: string, finalityFlag?: boolean, limit: number = 100): Promise<Position[]> {
+        const query = `
+        SELECT * FROM position_created_events, position_state_events, blocks
+        WHERE
+        position_created_events.position_id = position_state_events.position_id
+        AND position_created_events.owner_address = $1
+        AND
+            ( position_state_events.block_hash = blocks.block_hash OR
+             position_created_events.block_hash = blocks.block_hash )
+        AND ${finalityFlag ? "finality = 'FINAL'" : "finality <> 'REVERTED'"}
+        ORDER BY position_state_events.event_id DESC LIMIT $2
+        `;
+        const result = await this.query(query, [address, limit]);
 
         if (result.rows.length < 1) return undefined;
         return result.rows.map(r => rowToPosition(r));
+
     }
 
 

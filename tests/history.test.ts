@@ -1,5 +1,5 @@
 import { createBlock, createPosition, createReservation, createBtcTx, reservationStateChanged, positionStateChanged } from './utils';
-import { PositionState, ReservationState } from '../src/common/types';
+import { Finality, PositionState, ReservationState } from '../src/common/types';
 import { MaterializedHistory } from '../src/db/materialized-history';
 import { BlockDb } from '../src/db/block-db';
 import { config } from '../src/common/config';
@@ -95,16 +95,19 @@ describe('History API Test', () => {
 		// Step 7: Test the history API
 		const history = await historyDb.getOwnerHistory(ownerAddress, false, 1);
 
-		const record = history.find(r => r.reservation_id && r.reservation_id.trim() === fakeReservationId);
+		const record = history.find(r => r.reservationId && r.reservationId === fakeReservationId);
 
 		expect(record).toBeTruthy();
-		expect(record.reservation_id.trim()).toBe(fakeReservationId);
-		expect(record.register_chain).toBe(config.chainId);
-		expect(record.register_block_hash.trim()).toBe(`0xhashBlock${config.chainId}${evmBlock1}`);
-		expect(record.pay_chain).toBe(config.btcChainId);
-		expect(record.pay_block_hash.trim()).toBe(`hashBlock${btcBlock0}`);
-		expect(record.receive_chain).toBe(config.chainId);
-		expect(record.receive_block_hash.trim()).toBe(`0xhashBlock${config.chainId}${evmBlock2}`);
+		expect(record.reservationId).toBe(fakeReservationId);
+		expect(record.registrationChain).toBe(config.chainId);
+		expect(record.registrationBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock1}`);
+		expect(record.registrationBlockNumber).toBe(evmBlock1);
+		expect(record.originChain).toBe(config.btcChainId);
+		expect(record.originBlockHash).toBe(`hashBlock${btcBlock0}`);
+		expect(record.originBlockNumber).toBe(btcBlock0);
+		expect(record.targetChain).toBe(config.chainId);
+		expect(record.targetBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock2}`);
+		expect(record.targetBlockNumber).toBe(evmBlock2);
 		expect(record.state).toBe(ReservationState.SETTLED);
 	});
 
@@ -151,18 +154,21 @@ describe('History API Test', () => {
 		});
 
 		// Step 5: Test the history API
-		const history = await historyDb.getOwnerHistory(ownerAddress, false, 1);
+		const history = await historyDb.getOwnerHistory(ownerAddress, false, 100);
 
-		const record = history.find(r => r.position_id && r.position_id.trim() === fakePositionId);
+		const record = history.find(r => r.positionId && r.positionId === fakePositionId);
 
 		expect(record).toBeTruthy();
-		expect(record.position_id.trim()).toBe(fakePositionId);
-		expect(record.register_chain).toBe(config.chainId);
-		expect(record.register_block_hash.trim()).toBe(`0xhashBlock${config.chainId}${evmBlock0}`);
-		expect(record.pay_chain).toBe(config.chainId);
-		expect(record.pay_block_hash.trim()).toBe(`0xhashBlock${config.chainId}${evmBlock0}`);
-		expect(record.receive_chain).toBe(config.btcChainId);
-		expect(record.receive_block_hash.trim()).toBe(`hashBlock${btcBlock0}`);
+		expect(record.positionId).toBe(fakePositionId);
+		expect(record.registrationChain).toBe(config.chainId);
+		expect(record.registrationBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock0}`);
+		expect(record.registrationBlockNumber).toBe(evmBlock0);
+		expect(record.originChain).toBe(config.chainId);
+		expect(record.originBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock0}`);
+		expect(record.originBlockNumber).toBe(evmBlock0);
+		expect(record.targetChain).toBe(config.btcChainId);
+		expect(record.targetBlockHash).toBe(`hashBlock${btcBlock0}`);
+		expect(record.targetBlockNumber).toBe(btcBlock0);
 	});
 
 

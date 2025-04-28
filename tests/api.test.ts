@@ -144,4 +144,13 @@ describe('API Endpoints', () => {
             expect((response.text as HistoryRecord[]).length).toBeGreaterThan(0);
         });
     });
+
+    describe('GET /limits', () => {
+        it('should return limits always', async () => {
+            const response = await request(app).get('/limits');
+            console.log(response.body);
+            expect(response.status).toBe(200);
+            // expect((response.text as HistoryRecord[]).length).toBeGreaterThan(0);
+        });
+    });
 });
