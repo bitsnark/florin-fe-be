@@ -24,7 +24,8 @@ describe('EventsDb', () => {
                 exchangeRate: 10n ** 8n,
                 blockNumber: 12345,
                 blockHash: '0xBlockHash',
-                txhash: '0x000000'
+                txhash: '0x000000',
+                partialSettlement: false,
             };
 
             const eventId = await eventsDb.positionCreated(event);
@@ -34,7 +35,7 @@ describe('EventsDb', () => {
 
     describe('positionStateChanged', () => {
         it('should execute the correct query and return the event ID', async () => {
-            const event: Exclude<PositionStateEvent, 'eventId'> = {
+            let event: Exclude<PositionStateEvent, 'eventId'> = {
                 positionId: fakePositionId,
                 state: PositionState.ACTIVE,
                 blockNumber: 12345,
@@ -42,7 +43,18 @@ describe('EventsDb', () => {
                 txhash: '0x000000'
             };
 
-            const eventId = await eventsDb.positionStateChanged(event);
+            let eventId = await eventsDb.positionStateChanged(event);
+            expect(eventId).toBeTruthy();
+
+            event = {
+                positionId: fakePositionId,
+                state: PositionState.CLOSED,
+                blockNumber: 12345,
+                blockHash: '0xBlockHash',
+                txhash: '0x000000'
+            };
+
+            eventId = await eventsDb.positionStateChanged(event);
             expect(eventId).toBeTruthy();
         });
     });

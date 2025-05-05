@@ -25,10 +25,11 @@ export class EventWriter implements IEventWriter {
 
             positionId: args[index++],
             ownerAddress: args[index++],
+            bitcoinAddress: args[index++],
             tokenAddress: args[index++],
             originalAmount: args[index++],
-            bitcoinAddress: args[index++],
-            exchangeRate: args[index++]
+            exchangeRate: args[index++],
+            partialSettlement: args[index++]
         });
     }
 
@@ -56,10 +57,10 @@ export class EventWriter implements IEventWriter {
             ownerAddress: args[index++],
             amount: args[index++],
             isInscription: args[index++],
-            btcAddress: args[index++]
+            btcAddress: args[index++],
+
         });
     }
-
 
     private async reservationStateEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result) {
         let index = 0;

@@ -6,12 +6,13 @@ DROP TABLE IF EXISTS position_state_events;
 DROP TABLE IF EXISTS position_created_events;
 DROP TABLE IF EXISTS positions;
 DROP TABLE IF EXISTS blocks;
+DROP TABLE IF EXISTS bitcoin_txs;
 
 -- ============================
 -- Table for Blocks
 -- ============================
 CREATE TABLE blocks (
-    block_hash CHAR(66) PRIMARY KEY,  -- Unique id, hex string (32 bytes with 0x prefix)
+    block_hash CHARACTER VARYING PRIMARY KEY,  -- Unique id, hex string (32 bytes with 0x prefix)
     chain_id INTEGER NOT NULL,
     block_number INTEGER NOT NULL,
     finality TEXT NOT NULL            -- Finality status: 'UNKNOWN', 'FINAL', 'REVERTED'
@@ -23,16 +24,17 @@ CREATE TABLE blocks (
 -- ============================
 CREATE TABLE position_created_events (
     event_id SERIAL PRIMARY KEY,
-    position_id CHAR(66) NOT NULL UNIQUE,      -- Unique identifier for this position
+    position_id CHARACTER VARYING NOT NULL UNIQUE,      -- Unique identifier for this position
     chain_id INTEGER NOT NULL,
-    txhash CHAR(66) NOT NULL,               -- Transaction ID
-    owner_address CHAR(42) NOT NULL,
-    token_address CHAR(42) NOT NULL,
+    txhash CHARACTER VARYING NOT NULL,               -- Transaction ID
+    owner_address CHARACTER VARYING NOT NULL,
+    token_address CHARACTER VARYING NOT NULL,
     original_amount BIGINT NOT NULL,
-    bitcoin_address CHAR(66) NOT NULL,
+    bitcoin_address CHARACTER VARYING NOT NULL,
     exchange_rate BIGINT NOT NULL,
+    partial_settlement BOOLEAN NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
-    block_hash CHAR(66) NOT NULL           -- from EventBase
+    block_hash CHARACTER VARYING NOT NULL           -- from EventBase
 );
 
 -- ============================
@@ -41,11 +43,11 @@ CREATE TABLE position_created_events (
 -- ============================
 CREATE TABLE position_state_events (
     event_id SERIAL PRIMARY KEY,
-    txhash CHAR(66) NOT NULL,               -- Transaction ID
-    position_id CHAR(66) NOT NULL,
+    txhash CHARACTER VARYING NOT NULL,               -- Transaction ID
+    position_id CHARACTER VARYING NOT NULL,
     state TEXT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
-    block_hash CHAR(66) NOT NULL           -- from EventBase
+    block_hash CHARACTER VARYING NOT NULL           -- from EventBase
 );
 
 -- ============================
@@ -54,15 +56,15 @@ CREATE TABLE position_state_events (
 -- ============================
 CREATE TABLE reservation_created_events (
     event_id SERIAL PRIMARY KEY,
-    txhash CHAR(66) NOT NULL,               -- Transaction ID
-    reservation_id CHAR(66) NOT NULL UNIQUE,
-    owner_address CHAR(42) NOT NULL,
-    position_id CHAR(66) NOT NULL,
-    btc_address VARCHAR(64) NOT NULL,
+    txhash CHARACTER VARYING NOT NULL,               -- Transaction ID
+    reservation_id CHARACTER VARYING NOT NULL UNIQUE,
+    owner_address CHARACTER VARYING NOT NULL,
+    position_id CHARACTER VARYING NOT NULL,
+    bitcoin_address CHARACTER VARYING NOT NULL,
     amount BIGINT NOT NULL,
     is_inscription BOOLEAN NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
-    block_hash CHAR(66) NOT NULL            -- from EventBase
+    block_hash CHARACTER VARYING NOT NULL            -- from EventBase
 );
 
 -- ============================
@@ -71,11 +73,11 @@ CREATE TABLE reservation_created_events (
 -- ============================
 CREATE TABLE reservation_state_events (
     event_id SERIAL PRIMARY KEY,
-    txhash CHAR(66) NOT NULL,               -- Transaction ID
-    reservation_id CHAR(66) NOT NULL,
+    txhash CHARACTER VARYING NOT NULL,               -- Transaction ID
+    reservation_id CHARACTER VARYING NOT NULL,
     state TEXT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
-    block_hash CHAR(66) NOT NULL           -- from EventBase
+    block_hash CHARACTER VARYING NOT NULL           -- from EventBase
 );
 
 
@@ -89,6 +91,7 @@ CREATE TABLE bitcoin_txs (
     block_height INTEGER NOT NULL,
     target_chain_id CHARACTER VARYING NOT NULL,
     reservation_id CHARACTER VARYING NOT NULL,
+    position_id CHARACTER VARYING NOT NULL,
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (txid, block_hash)
 );

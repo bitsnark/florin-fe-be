@@ -19,6 +19,7 @@ export interface IConfig {
     providerUrl: string;
     chainId: number;
     contractAddress: string;
+    openPositionInListenerUrl: string;
     finalityBlocks: number;
     loopIntervalMs: number;
 
@@ -31,6 +32,9 @@ export interface IConfig {
 
     httpPort: number;
     httpsPort: number;
+
+    btcMaxAllowedSatTransfer: number;
+    evmMaxAllowedSatTransfer: number;
 }
 
 export const config: IConfig = {
@@ -42,15 +46,16 @@ export const config: IConfig = {
     postgresPassword: parse.string('POSTGRES_PASSWORD', '1234'),
     postgresKeepAlive: parse.boolean('POSTGRES_KEEP_ALIVE', true),
 
-    mmPositionId: parse.string('MM_POSITION_ID', '0x000000'),
+    mmPositionId: parse.string('MM_POSITION_ID', '1745750236411                                                     '),
     blockStart: parse.integer('BLOCK_START', 0),
-    providerUrl: parse.string('PROVIDER_URL', ''), //https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+    providerUrl: parse.string('PROVIDER_URL', 'localhost:8545'),
     chainId: parse.integer('CHAIN_ID', 31337),
-    contractAddress: parse.string('CONTRACT_ADDRESS', '0x000000'),
+    contractAddress: parse.string('CONTRACT_ADDRESS', '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'),
+    openPositionInListenerUrl: parse.string('OPEN_POSITION_IN_LISTENER_URL', 'http://localhost:3000/open-position'),
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
 
-    btcChainId: parse.integer('BTC_CHAIN_ID', 100011),
+    btcChainId: parse.integer('BTC_CHAIN_ID', -1),
     btcBlockStart: parse.integer('BTC_BLOCK_START', 0),
     btcFinalityBlocks: parse.integer('BTC_FINALITY_BLOCKS', 6),
     btcNodeUsername: parse.string('BTC_NODE_USERNAME', ''),
@@ -58,5 +63,9 @@ export const config: IConfig = {
     btcNodeHost: parse.string('BTC_NODE_HOST', ''),
 
     httpPort: parse.integer('HTTP_PORT', 800),
-    httpsPort: parse.integer('HTTPS_PORT', 4430)
+    httpsPort: parse.integer('HTTPS_PORT', 4430),
+    btcMaxAllowedSatTransfer: parse.integer('BTC_MAX_ALLOWED_TRANSFER', 5000000),
+    evmMaxAllowedSatTransfer: parse.integer('EVM_MAX_ALLOWED_TRANSFER', 5000000),
+
+
 }

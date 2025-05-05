@@ -3,6 +3,8 @@ import express from 'express';
 import { setApi, indexGreeting } from '../src/api/api';
 import { Finality, PositionState, ReservationState } from '../src/common/types';
 import { createPosition, createReservation } from './utils';
+import { HistoryRecord } from '../src/db/materialized-history';
+
 
 const fakePositionId = `${Date.now()}`;
 
@@ -132,6 +134,23 @@ describe('API Endpoints', () => {
             const response = await request(app).post('/positions');
             expect(response.status).toBe(500);
             expect(response.text).toBe('Internal Server Error');
+        });
+    });
+
+    describe('GET /history/:address', () => {
+        it('should find users history', async () => {
+            const response = await request(app).get('/history/0xevmOwnerAddress');
+            expect(response.status).toBe(200);
+            expect((response.text as HistoryRecord[]).length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('GET /limits', () => {
+        it('should return limits always', async () => {
+            const response = await request(app).get('/limits');
+            console.log(response.body);
+            expect(response.status).toBe(200);
+            // expect((response.text as HistoryRecord[]).length).toBeGreaterThan(0);
         });
     });
 });
