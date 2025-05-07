@@ -41,7 +41,7 @@ export class BitcoinTxFinder {
 			}
 			else {
 				//@Make sure btcAdress isnt convertBytes32ToP2TRAddress?
-				reservationMap.set(row.btcAddress, row);
+				reservationMap.set(convertBytes32ToP2TRAddress(row.btcAddress), row);
 			}
 		}
 		return reservationMap;
@@ -49,11 +49,12 @@ export class BitcoinTxFinder {
 
 	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
 		const rsvRows = await this.getPendingReservationAddressMap();
-		if (rsvRows.size === 0) throw new Error('No pending reservations found');
+		if (rsvRows.size === 0) return;
 
 		const block = await this.bitcoinRPC.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
 
 		for (const tx of block.tx) {
+
 			let reservation: ReservationWithInscription;
 
 			// Find transactions sent to one of the pending reservations

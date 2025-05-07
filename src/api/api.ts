@@ -216,17 +216,6 @@ export function setApi(app: Express) {
     });
 
 
-    app.get('/limits', async (req, res) => {
-        try {
-            const balances = await balanceFetcher.getBalances();
-            if (balances) res.json({ data: balances });
-
-        } catch (e) {
-            console.error(e);
-            res.status(500).send('Internal Server Error');
-        }
-    });
-
     app.post('/position', async (req, res) => {
         try {
             const { forwardData } = req.body;

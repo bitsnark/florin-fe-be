@@ -1,4 +1,4 @@
-import { BtcBlockScanner } from '../src/btc/btc_block_scanner';
+import { BtcBlockScanner } from '../src/btc/btc-block-scanner';
 import { IBlockDb } from '../src/db/block-db';
 import { BitcoinNode } from '../src/btc/bitcoin-node';
 import { Finality } from '../src/common/types';

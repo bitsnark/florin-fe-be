@@ -16,20 +16,21 @@ export class EventWriter implements IEventWriter {
     }
 
     private async positionCreatedEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result) {
-        let index = 0;
+        const bitcoinAddress = Array.isArray(args[2]) ? args[2].join(",") : args[2];
+
         await this.db.positionCreated({
             chainId: config.chainId,
             blockNumber: blockNumber,
             blockHash: blockHash,
             txhash,
 
-            positionId: args[index++],
-            ownerAddress: args[index++],
-            bitcoinAddress: args[index++],
-            tokenAddress: args[index++],
-            originalAmount: args[index++],
-            exchangeRate: args[index++],
-            partialSettlement: args[index++]
+            positionId: args[0],
+            ownerAddress: args[1],
+            bitcoinAddress: bitcoinAddress,
+            tokenAddress: args[2],
+            originalAmount: args[3],
+            exchangeRate: args[4],
+            partialSettlement: args[5]
         });
     }
 
@@ -76,16 +77,16 @@ export class EventWriter implements IEventWriter {
 
     public async parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription) {
         switch (parsedLog.name) {
-            case 'positionCreatedEvent':
+            case 'PositionCreated':
                 this.positionCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 break;
-            case 'positionStateEvent':
+            case 'PositionStatusChanged':
                 this.positionStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 break;
-            case 'reservationCreatedEvent':
+            case 'ReservationCreated':
                 this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 break;
-            case 'reservationStateEvent':
+            case 'ReservationStatusChanged':
                 this.reservationStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 break;
         }

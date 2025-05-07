@@ -12,7 +12,7 @@ function rowToReservation(row: any): Reservation {
         amount: row.amount,
         finality: row.finality,
         txhash: row.txhash,
-        btcAddress: row.bitcoin_address,
+        btcAddress: row.bitcoin_address, // format?
         isInscription: row.is_inscription,
         chainId: row.chain_id,
     };

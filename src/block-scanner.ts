@@ -1,9 +1,9 @@
 import { config } from "./common/config";
-import { IBlockDb } from "./db/block-db";
+import { BlockDb, IBlockDb } from "./db/block-db";
 import { Block, Finality } from './common/types';
 import { sleep } from "./common/sleep";
-import { IEventWriter } from "./event-writer";
-import { IBlockProvider } from "./block-provider";
+import { EventWriter, IEventWriter } from "./event-writer";
+import { BlockProvider, IBlockProvider } from "./block-provider";
 
 export class BlockScanner {
 
@@ -54,7 +54,7 @@ export class BlockScanner {
 
         // Get all non-final blocks that are past maturity
         const blocks = (await this.blockDb.getBlocksByFinality(config.chainId, Finality.UNKNOWN))
-            .filter(block => block.blockNumber + config.finalityBlocks < highest);
+            .filter(block => block.blockNumber + config.finalityBlocks <= highest);
 
         // Map them according to height and check if they exist in the node
         const heightMap: { [key: number]: Block[] } = {};
@@ -107,4 +107,14 @@ export class BlockScanner {
             await sleep(config.loopIntervalMs);
         }
     }
+}
+
+
+if (module === require.main) {
+    const blockDb = new BlockDb();
+    const provider = new BlockProvider();
+    const eventWriter = new EventWriter();
+
+    const scanner = new BlockScanner(blockDb, provider, eventWriter);
+    scanner.run();
 }
