@@ -17,7 +17,7 @@ export class BlockScanner {
         this.eventWriter = eventWriter;
     }
 
-    async processEvents(blockNumber: number, blockHash: string) {
+    async processEvents(blockNumber: number, blockHash: string, timestamp?: number) {
         const parsedLogs = await this.provider.getParsedLogs(blockNumber);
         for (const log of parsedLogs) {
             await this.eventWriter.parseEvent(blockNumber, blockHash, log.txhash, log);
@@ -38,7 +38,7 @@ export class BlockScanner {
                 throw new Error(`Block at height ${blockNumber} not found`);
             }
 
-            await this.processEvents(blockNumber, evmBlock.hash);
+            await this.processEvents(blockNumber, evmBlock.hash, evmBlock.timestamp);
 
             await this.blockDb.create({
                 blockHash: evmBlock.hash,

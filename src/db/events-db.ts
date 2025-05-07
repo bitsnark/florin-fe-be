@@ -32,6 +32,7 @@ export class EventsDb extends Db {
         INSERT INTO position_state_events
         (position_id, state, block_number, block_hash, txhash)
         VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (position_id, state, txhash) DO NOTHING
         RETURNING event_id
       `;
     const result = await this.query(query, [
@@ -71,6 +72,7 @@ export class EventsDb extends Db {
     INSERT INTO reservation_state_events
     (reservation_id, state, block_number, block_hash, txhash)
     VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT (reservation_id, state, txhash) DO NOTHING
     RETURNING event_id
   `;
     const result = await this.query(query, [

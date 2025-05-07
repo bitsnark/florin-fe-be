@@ -33,6 +33,7 @@ export class BitcoinTxFinder {
 
 	async getPendingReservationAddressMap(): Promise<Map<string, ReservationWithInscription>> {
 		const rows = await this.eventsDb.getReservationsByState(ReservationState.PENDING);
+
 		const reservationMap = new Map<string, ReservationWithInscription>();
 		for (const row of rows) {
 			if (row.isInscription) {
@@ -47,7 +48,7 @@ export class BitcoinTxFinder {
 		return reservationMap;
 	}
 
-	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
+	async scanBlock(blockHeight: number, blockHash: string, blocktime?: number): Promise<void> {
 		const rsvRows = await this.getPendingReservationAddressMap();
 		if (rsvRows.size === 0) return;
 

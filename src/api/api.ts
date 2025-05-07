@@ -207,7 +207,7 @@ export function setApi(app: Express) {
             return;
         }
         try {
-            const history = await materializedHistory.getOwnerHistory(address, finalityFlag)
+            const history = await materializedHistory.getOwnerHistory(address.toLowerCase(), finalityFlag)
             if (history) res.send(jsonStringifyCustom(history));
         } catch (e) {
             console.error(e);

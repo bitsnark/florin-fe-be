@@ -15,7 +15,8 @@ CREATE TABLE blocks (
     block_hash CHARACTER VARYING PRIMARY KEY,  -- Unique id, hex string (32 bytes with 0x prefix)
     chain_id INTEGER NOT NULL,
     block_number INTEGER NOT NULL,
-    finality TEXT NOT NULL            -- Finality status: 'UNKNOWN', 'FINAL', 'REVERTED'
+    finality TEXT NOT NULL,
+    block_timestamp TIMESTAMP
 );
 
 -- ============================
@@ -47,7 +48,8 @@ CREATE TABLE position_state_events (
     position_id CHARACTER VARYING NOT NULL,
     state TEXT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
-    block_hash CHARACTER VARYING NOT NULL           -- from EventBase
+    block_hash CHARACTER VARYING NOT NULL,           -- from EventBase
+    UNIQUE (position_id, state, txhash)
 );
 
 -- ============================
@@ -77,7 +79,8 @@ CREATE TABLE reservation_state_events (
     reservation_id CHARACTER VARYING NOT NULL,
     state TEXT NOT NULL,
     block_number INTEGER NOT NULL,         -- from EventBase
-    block_hash CHARACTER VARYING NOT NULL           -- from EventBase
+    block_hash CHARACTER VARYING NOT NULL,
+    UNIQUE (reservation_id, state, txhash)
 );
 
 
