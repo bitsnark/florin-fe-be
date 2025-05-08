@@ -8,6 +8,9 @@ export function initServer() {
     // Create an Express application
     const app = express();
     app.use(cors()); // <-- Enable CORS for cross-origin requests
+    app.set('trust proxy', 2)
+    app.use(express.json());
+
     // app.use(bodyParser.json()); // <-- Parse incoming JSON requests
     // app.use(bodyParser.urlencoded({ extended: true })); // <-- Parse URL-encoded data
 
