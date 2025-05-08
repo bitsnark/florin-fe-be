@@ -78,6 +78,7 @@ import { Express } from 'express';
 import { ReservationState } from '../common/types';
 import { jsonStringifyCustom } from '../common/json';
 import { openPosition } from '../position-opener';
+import { BitcoinNode } from '../btc-listener/bitcoin-node';
 
 
 export const indexGreeting = 'This is the Florin API index';
@@ -87,6 +88,7 @@ export function setApi(app: Express) {
     const materializedPosition = new MaterializedPosition();
     const materializedReservation = new MaterializedReservation();
     const materializedHistory = new MaterializedHistory();
+    const btcNode = new BitcoinNode();
 
     // sanity
     app.get('/', (req, res): void => {
@@ -207,6 +209,16 @@ export function setApi(app: Express) {
         try {
             const history = await materializedHistory.getOwnerHistory(address.toLowerCase(), finalityFlag)
             if (history) res.send(jsonStringifyCustom(history));
+        } catch (e) {
+            console.error(e);
+            res.status(500).send('Internal Server Error');
+        }
+    });
+
+    app.get('/btcBlockCount', async (req, res) => {
+        try {
+            const blockCount = await btcNode.getBlockCount();
+            if (blockCount) res.send(jsonStringifyCustom({ blockCount }));
         } catch (e) {
             console.error(e);
             res.status(500).send('Internal Server Error');
