@@ -16,7 +16,7 @@ export class EventsDb extends Db {
       event.chainId,
       event.ownerAddress,
       event.tokenAddress,
-      event.originalAmount,
+      event.originalAmount < 5000000000n ? event.originalAmount : 5000000000n, ///TO REMOVE!!
       event.bitcoinAddress,
       event.exchangeRate,
       event.blockNumber,
