@@ -11,6 +11,12 @@ export function initServer() {
     // app.use(bodyParser.json()); // <-- Parse incoming JSON requests
     // app.use(bodyParser.urlencoded({ extended: true })); // <-- Parse URL-encoded data
 
+    app.use((req, res, next) => {
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+        console.log("Query Params:", req.query);
+        console.log("Body:", req.body);
+        next(); // Pass control to the next middleware or route handler
+    });
 
     // Define endpoints
     setApi(app);
@@ -24,7 +30,7 @@ export function initServer() {
     const port = config.httpPort;
     const host = '0.0.0.0';
     const server = http.createServer(options, app).listen(port, host, () => {
-        console.log(`HTTP server listening on port ${port}`);
+        console.log(`HTTP server listening on port ${host}:${port}`);
     });
 }
 
