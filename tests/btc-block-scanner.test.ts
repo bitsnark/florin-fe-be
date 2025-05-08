@@ -1,6 +1,6 @@
-import { BtcBlockScanner } from '../src/btc/btc-block-scanner';
+import { BtcBlockScanner } from '../src/btc-listener/btc-block-scanner';
 import { IBlockDb } from '../src/db/block-db';
-import { BitcoinNode } from '../src/btc/bitcoin-node';
+import { BitcoinNode } from '../src/btc-listener/bitcoin-node';
 import { Finality } from '../src/common/types';
 import { config } from '../src/common/config';
 import { sleep } from '../src/common/sleep';

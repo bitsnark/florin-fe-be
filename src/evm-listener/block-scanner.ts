@@ -1,7 +1,7 @@
-import { config } from "./common/config";
-import { BlockDb, IBlockDb } from "./db/block-db";
-import { Block, Finality } from './common/types';
-import { sleep } from "./common/sleep";
+import { config } from "../common/config";
+import { BlockDb, IBlockDb } from "../db/block-db";
+import { Block, Finality } from '../common/types';
+import { sleep } from "../common/sleep";
 import { EventWriter, IEventWriter } from "./event-writer";
 import { BlockProvider, IBlockProvider } from "./block-provider";
 

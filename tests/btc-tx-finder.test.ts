@@ -1,5 +1,5 @@
-import { BitcoinTxFinder } from "../src/btc/btc-tx-finder";
-import { BitcoinNode } from "../src/btc/bitcoin-node";
+import { BitcoinTxFinder } from "../src/btc-listener/btc-tx-finder";
+import { BitcoinNode } from "../src/btc-listener/bitcoin-node";
 import { MaterializedReservation } from "../src/db/materialized-reservation";
 import { BtcTxDb } from "../src/db/btc-tx-db";
 import { ReservationState } from "../src/common/types";

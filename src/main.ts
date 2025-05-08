@@ -1,11 +1,11 @@
 import { time } from 'console';
 import { initServer } from './api/index';
-import { BlockProvider } from './block-provider';
-import { BlockScanner } from './block-scanner';
-import { BitcoinNode } from './btc/bitcoin-node';
-import { BtcBlockScanner } from './btc/btc-block-scanner';
+import { BlockProvider } from './evm-listener/block-provider';
+import { BlockScanner } from './evm-listener/block-scanner';
+import { BitcoinNode } from './btc-listener/bitcoin-node';
+import { BtcBlockScanner } from './btc-listener/btc-block-scanner';
 import { BlockDb } from './db/block-db';
-import { EventWriter } from './event-writer';
+import { EventWriter } from './evm-listener/event-writer';
 
 async function main() {
 	try {

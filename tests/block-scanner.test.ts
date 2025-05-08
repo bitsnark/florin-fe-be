@@ -1,7 +1,7 @@
-import { BlockScanner } from "../src/block-scanner";
+import { BlockScanner } from "../src/evm-listener/block-scanner";
 import { IBlockDb } from "../src/db/block-db";
-import { IBlockProvider } from "../src/block-provider";
-import { IEventWriter } from "../src/event-writer";
+import { IBlockProvider } from "../src/evm-listener/block-provider";
+import { IEventWriter } from "../src/evm-listener/event-writer";
 import { config } from "../src/common/config";
 import { Finality } from "../src/common/types";
 import { jest, describe, beforeEach, it, expect } from "@jest/globals";
