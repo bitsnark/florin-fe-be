@@ -13,11 +13,11 @@ export class BlockDb extends Db implements IBlockDb {
 
   async create(block: Block): Promise<void> {
     const query = `
-        INSERT INTO blocks (block_hash, chain_id, block_number, finality)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO blocks (block_hash, chain_id, block_number, finality, block_timestamp)
+        VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (block_hash) DO NOTHING
       `;
-    await this.query(query, [block.blockHash, block.chainId, block.blockNumber, block.finality]);
+    await this.query(query, [block.blockHash, block.chainId, block.blockNumber, block.finality, block.blockTimestamp]);
   }
 
   async getByHash(blockHash: string): Promise<Block> {
@@ -33,7 +33,8 @@ export class BlockDb extends Db implements IBlockDb {
       blockHash: row.block_hash,
       chainId: row.chain_id,
       blockNumber: row.block_number,
-      finality: row.finality
+      finality: row.finality,
+      blockTimestamp: row.block_timestamp
     };
   }
 
@@ -56,7 +57,8 @@ export class BlockDb extends Db implements IBlockDb {
       blockHash: row.block_hash,
       chainId: row.chain_id,
       blockNumber: row.block_number,
-      finality: row.finality
+      finality: row.finality,
+      blockTimestamp: row.block_timestamp
     }));
   }
 
@@ -70,7 +72,7 @@ export class BlockDb extends Db implements IBlockDb {
     const result = await this.query(query, [chainId]);
     if (result.rows.length < 1) return null;
     const row = result.rows[0];
-    return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality };
+    return { blockHash: row.block_hash, chainId: row.chain_id, blockNumber: row.block_number, finality: row.finality, blockTimestamp: row.block_timestamp };
   }
 
 }

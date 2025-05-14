@@ -8,7 +8,8 @@ const fakeBlock = {
     blockHash: fakeBlockHash,
     chainId: 20002,
     blockNumber: 1,
-    finality: Finality.UNKNOWN
+    finality: Finality.UNKNOWN,
+    blockTimestamp: new Date().toISOString()
 };
 
 describe('Block DB', () => {

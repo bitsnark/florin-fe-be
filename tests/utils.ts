@@ -30,6 +30,7 @@ export async function createPosition(position: any) {
         chainId: position.chainId,
         blockNumber: position.blockNumber ? position.blockNumber : fakeBlockNumber,
         finality: Finality.FINAL,
+        blockTimestamp: new Date().toISOString()
     });
 }
 
@@ -79,6 +80,7 @@ export async function createBlock(block: any) {
         chainId: block.chainId,
         blockNumber: block.blockNumber ? block.blockNumber : fakeBlockNumber,
         finality: Finality.FINAL,
+        blockTimestamp: new Date().toISOString()
     });
 
 }

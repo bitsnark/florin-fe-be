@@ -18,7 +18,7 @@ export class BlockScanner {
         this.eventWriter = eventWriter;
     }
 
-    async processEvents(blockNumber: number, blockHash: string, timestamp?: number) {
+    async processEvents(blockNumber: number, blockHash: string) {
         const parsedLogs = await this.provider.getParsedLogs(blockNumber);
         for (const log of parsedLogs) {
             await this.eventWriter.parseEvent(blockNumber, blockHash, log.txhash, log);
@@ -48,7 +48,8 @@ export class BlockScanner {
                 blockHash: evmBlock.hash,
                 chainId: config.chainId,
                 blockNumber,
-                finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN
+                finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
+                blockTimestamp: evmBlock.timestamp.toString()
             });
         }
 

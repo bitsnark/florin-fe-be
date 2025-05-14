@@ -37,7 +37,8 @@ export class BtcBlockScanner {
 				blockHash: btcBlock.hash,
 				chainId: config.btcChainId,
 				blockNumber,
-				finality: Finality.UNKNOWN
+				finality: Finality.UNKNOWN,
+				blockTimestamp: btcBlock.time.toString()
 			});
 		}
 	}

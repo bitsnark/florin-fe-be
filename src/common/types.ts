@@ -8,12 +8,10 @@ export enum Finality {
 export interface Block {
     // Unique id, hex string
     blockHash: string;
-
     chainId: number;
-
     blockNumber: number;
-
     finality: Finality;
+    blockTimestamp: string;
 }
 
 

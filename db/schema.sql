@@ -16,8 +16,14 @@ CREATE TABLE blocks (
     chain_id INTEGER NOT NULL,
     block_number INTEGER NOT NULL,
     finality TEXT NOT NULL,
-    block_timestamp TIMESTAMP
+    block_timestamp CHARACTER VARYING NOT NULL
 );
+
+CREATE INDEX idx_blocks_chain_id ON blocks (chain_id);
+CREATE INDEX idx_blocks_block_number ON blocks (block_number);
+CREATE INDEX idx_blocks_finality ON blocks (finality);
+CREATE INDEX idx_blocks_block_timestamp ON blocks (block_timestamp);
+
 
 -- ============================
 -- Table for PositionCreatedEvents
@@ -38,6 +44,13 @@ CREATE TABLE position_created_events (
     block_hash CHARACTER VARYING NOT NULL           -- from EventBase
 );
 
+CREATE INDEX idx_position_created_events_owner_address ON position_created_events (owner_address);
+CREATE INDEX idx_position_created_events_chain_id ON position_created_events (chain_id);
+CREATE INDEX idx_position_created_events_block_number ON position_created_events (block_number);
+CREATE INDEX idx_position_created_events_block_hash ON position_created_events (block_hash);
+CREATE INDEX idx_position_created_events_position_id ON position_created_events (position_id);
+CREATE INDEX idx_position_created_events_partial_settlement ON position_created_events (partial_settlement);
+
 -- ============================
 -- Table for PositionStateEvents
 -- (extends EventBase and includes only positionId and state)
@@ -51,6 +64,12 @@ CREATE TABLE position_state_events (
     block_hash CHARACTER VARYING NOT NULL,           -- from EventBase
     UNIQUE (position_id, state, txhash)
 );
+
+
+CREATE INDEX idx_position_state_events_position_id ON position_state_events (position_id);
+CREATE INDEX idx_position_state_events_state ON position_state_events (state);
+CREATE INDEX idx_position_state_events_block_number ON position_state_events (block_number);
+CREATE INDEX idx_position_state_events_block_hash ON position_state_events (block_hash);
 
 -- ============================
 -- Table for ReservationCreatedEvents
@@ -69,6 +88,13 @@ CREATE TABLE reservation_created_events (
     block_hash CHARACTER VARYING NOT NULL            -- from EventBase
 );
 
+CREATE INDEX idx_reservation_created_events_owner_address ON reservation_created_events (owner_address);
+CREATE INDEX idx_reservation_created_events_position_id ON reservation_created_events (position_id);
+CREATE INDEX idx_reservation_created_events_block_number ON reservation_created_events (block_number);
+CREATE INDEX idx_reservation_created_events_block_hash ON reservation_created_events (block_hash);
+CREATE INDEX idx_reservation_created_events_reservation_id ON reservation_created_events (reservation_id);
+CREATE INDEX idx_reservation_created_events_is_inscription ON reservation_created_events (is_inscription);
+
 -- ============================
 -- Table for ReservationStateEvents
 -- (extends EventBase and includes only reservationId and state)
@@ -82,6 +108,12 @@ CREATE TABLE reservation_state_events (
     block_hash CHARACTER VARYING NOT NULL,
     UNIQUE (reservation_id, state, txhash)
 );
+
+CREATE INDEX idx_reservation_state_events_reservation_id ON reservation_state_events (reservation_id);
+CREATE INDEX idx_reservation_state_events_state ON reservation_state_events (state);
+CREATE INDEX idx_reservation_state_events_block_number ON reservation_state_events (block_number);
+CREATE INDEX idx_reservation_state_events_block_hash ON reservation_state_events (block_hash);
+
 
 
 -- ============================
@@ -99,5 +131,13 @@ CREATE TABLE bitcoin_txs (
     PRIMARY KEY (txid, block_hash)
 );
 
+CREATE INDEX idx_bitcoin_txs_block_hash ON bitcoin_txs (block_hash);
+CREATE INDEX idx_bitcoin_txs_block_height ON bitcoin_txs (block_height);
+CREATE INDEX idx_bitcoin_txs_target_chain_id ON bitcoin_txs (target_chain_id);
+CREATE INDEX idx_bitcoin_txs_reservation_id ON bitcoin_txs (reservation_id);
+CREATE INDEX idx_bitcoin_txs_position_id ON bitcoin_txs (position_id);
+CREATE INDEX idx_bitcoin_txs_timestamp ON bitcoin_txs (timestamp);
+CREATE INDEX idx_bitcoin_txs_txid ON bitcoin_txs (txid);
+CREATE INDEX idx_bitcoin_txs_reservation_id_block_hash ON bitcoin_txs (reservation_id, block_hash);
 
 
