@@ -2,6 +2,7 @@ import { convertBytes32ToP2TRAddress } from '../common/bech32';
 import { config } from '../common/config';
 import { Finality, Position, PositionState, Reservation, ReservationState } from '../common/types';
 import { Db } from "./db";
+import { HistoryRecord, mapRowsToHistoryRecords, MaterializedHistory } from './materialized-history';
 
 function rowToReservation(row: any): Reservation {
     return {
@@ -30,55 +31,53 @@ export interface OpenReservation {
 }
 
 
-export class MaterializedReservation extends Db {
+export class MaterializedReservation extends MaterializedHistory {
 
     constructor() {
         super();
     }
 
-    async getReservationById(reservationId: string, finalityFlag?: boolean): Promise<Reservation> {
+    async getReservationRecord(reservationId: string, finalityFlag: boolean): Promise<HistoryRecord> {
+        let reservation = await this.getReservationById(reservationId, finalityFlag);
+        if (!reservation) return undefined;
+
+        const payment = await this.getOwnerBtcTransactions([reservation], finalityFlag);
+        if (payment.length === 1) {
+            reservation = {
+                ...reservation,
+                ...payment[0]
+            }
+        }
+
+        const ReservationsStatus = await this.getReservationLastStatus([reservation], finalityFlag);
+        if (ReservationsStatus.length === 1) {
+            reservation = {
+                ...reservation,
+                ...ReservationsStatus[0]
+            }
+        }
+
+        return reservation
+    }
+
+    protected async getReservationById(reservationId: string, finalityFlag?: boolean): Promise<HistoryRecord> {
         const query = `
-        SELECT * from reservation_created_events, reservation_state_events, blocks
-        WHERE
-        reservation_created_events.reservation_id = reservation_state_events.reservation_id
-        AND
-            ( reservation_created_events.block_hash = blocks.block_hash OR
-             reservation_state_events.block_hash = blocks.block_hash )
-        AND reservation_created_events.reservation_id = $1
-        AND ${finalityFlag ? "blocks.finality = 'FINAL'" : "blocks.finality <> 'REVERTED'"}
-        ORDER BY reservation_state_events.event_id DESC LIMIT 1
-        `;
+            SELECT
+                reservation_id, amount, bitcoin_address, owner_address,
+                b.chain_id as registration_chain, rc.txhash as registration_txhash,
+                b.block_number as registration_block_number, rc.block_hash as registration_block_hash,
+                finality, b.block_timestamp
+            FROM
+                reservation_created_events as rc, blocks as b
+            WHERE rc.block_hash = b.block_hash
+                AND reservation_id= $1
+                AND is_inscription = false
+                AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+                `
         const result = await this.query(query, [reservationId]);
-        if (result.rows.length != 1) return undefined;
-        return rowToReservation(result.rows[0]);
-    }
+        if (result.rows.length < 1) return;
+        return mapRowsToHistoryRecords(result.rows)[0];
 
-    async getAllReservations(finalityFlag?: boolean): Promise<Reservation[]> {
-        const query = `
-        SELECT DISTINCT ON (rce.reservation_id)
-            rce.*,
-            rse.state,
-            rse.event_id,
-            b.finality,
-            b.block_number,
-            b.chain_id
-        FROM reservation_created_events rce, reservation_state_events rse, blocks b
-        WHERE
-        rce.reservation_id = rse.reservation_id
-        AND rse.block_hash = b.block_hash
-        AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
-        ORDER BY rce.reservation_id, rse.event_id DESC;
-        `;
-        const result = await this.query(query, []);
-        return result.rows.map(rowToReservation);
-    }
-
-    async getReservationsByState(reservationState: ReservationState, finalityFlag?: boolean): Promise<Reservation[]> {
-        return (await this.getAllReservations(finalityFlag)).filter(r => r.state == reservationState);
-    }
-
-    async getReservationByOwner(ownerAddress: string, finalityFlag?: boolean): Promise<Reservation[]> {
-        return (await this.getAllReservations(finalityFlag)).filter(r => r.ownerAddress == ownerAddress);
     }
 
     async getUnfulfilledReservations(): Promise<OpenReservation[]> {
@@ -115,5 +114,29 @@ export class MaterializedReservation extends Db {
             txid: row.txid,
             positionId: row.position_id
         }));
+    }
+
+    async getAllReservations(finalityFlag?: boolean): Promise<Reservation[]> {
+        const query = `
+        SELECT DISTINCT ON (rce.reservation_id)
+            rce.*,
+            rse.state,
+            rse.event_id,
+            b.finality,
+            b.block_number,
+            b.chain_id
+        FROM reservation_created_events rce, reservation_state_events rse, blocks b
+        WHERE
+        rce.reservation_id = rse.reservation_id
+        AND rse.block_hash = b.block_hash
+        AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+        ORDER BY rce.reservation_id, rse.event_id DESC;
+        `;
+        const result = await this.query(query, []);
+        return result.rows.map(rowToReservation);
+    }
+
+    async getReservationsByState(reservationState: ReservationState, finalityFlag?: boolean): Promise<Reservation[]> {
+        return (await this.getAllReservations(finalityFlag)).filter(r => r.state == reservationState);
     }
 }

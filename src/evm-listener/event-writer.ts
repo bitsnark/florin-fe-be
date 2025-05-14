@@ -79,19 +79,19 @@ export class EventWriter implements IEventWriter {
         switch (parsedLog.name) {
             case 'PositionCreated':
                 this.positionCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: PositionCreated  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                console.log(`parseEvent: PositionCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'PositionStatusChanged':
                 this.positionStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: PositionStatusChanged  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                console.log(`parseEvent: PositionStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationCreated':
                 this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: ReservationCreated  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                console.log(`parseEvent: ReservationCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationStatusChanged':
                 this.reservationStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: ReservationStatusChanged  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                console.log(`parseEvent: ReservationStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
         }
     }

@@ -2,6 +2,10 @@ import { config } from "../common/config";
 import { Finality } from '../common/types';
 import { Db } from "./db";
 
+
+
+
+
 export interface HistoryRecord {
     positionId?: string;
     reservationId?: string;
@@ -28,6 +32,19 @@ export interface HistoryRecord {
     registrationTimestamp?: string;
 }
 
+export function mapRowsToHistoryRecords(rows: any[]): HistoryRecord[] {
+    return rows.map((row) => {
+        const mappedRow: any = {};
+        for (const key in row) {
+            if (Object.prototype.hasOwnProperty.call(row, key)) {
+                // Convert '_x' to 'X'
+                const convertedKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                mappedRow[convertedKey] = row[key];
+            }
+        }
+        return mappedRow as HistoryRecord;
+    });
+}
 export class MaterializedHistory extends Db {
 
     constructor() {
@@ -44,7 +61,7 @@ export class MaterializedHistory extends Db {
     //----------------------------------------------------------------------------------------
     // Collect owner position history
     protected async getOwnerPositionHistory(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
-        const positions = await this.getOwnerFullPosition(address, finalityFlag, limit);
+        const positions = await this.getOwnerFullPositions(address, finalityFlag, limit);
         if (positions.length < 1) return [];
 
         const btcTxs = await this.getBtcTxsByPositions(positions, finalityFlag);
@@ -65,7 +82,9 @@ export class MaterializedHistory extends Db {
         return result;
     }
 
-    protected async getOwnerFullPosition(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
+
+
+    protected async getOwnerFullPositions(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
         const query = `
         SELECT
             position_id, original_amount,token_address, owner_address, bitcoin_address,
@@ -82,19 +101,7 @@ export class MaterializedHistory extends Db {
         const result = await this.query(query, [address, limit]);
 
         if (result.rows.length < 1) return [];
-        return result.rows.map(r => ({
-            positionId: r.position_id,
-            amount: r.original_amount.toString(),
-            tokenAddress: r.token_address,
-            ownerAddress: r.owner_address,
-            bitcoinAddress: r.bitcoin_address,
-            registrationChain: r.registration_chain,
-            registrationTxhash: r.registration_txhash,
-            registrationBlockHash: r.registration_block_hash,
-            registrationBlockNumber: r.block_number,
-            registrationFinality: r.finality,
-            registrationTimestamp: r.block_timestamp
-        }));
+        return mapRowsToHistoryRecords(result.rows);
     }
 
     protected async getBtcTxsByPositions(positions: HistoryRecord[], finalityFlag?: boolean): Promise<HistoryRecord[]> {
@@ -112,14 +119,7 @@ export class MaterializedHistory extends Db {
         const positionIds = positions.map(p => p.positionId);
         const result = await this.query(query, [positionIds, config.btcChainId]);
         if (result.rows.length < 1) return [];
-        return result.rows.map(r => ({
-            positionId: r.position_id,
-            targetChain: r.target_chain,
-            targetTxhash: r.target_txhash,
-            targetBlockHash: r.target_block_hash,
-            targetBlockNumber: r.target_block_number,
-            targetFinality: r.finality
-        }));
+        return mapRowsToHistoryRecords(result.rows);
     }
     //----------------------------------------------------------------------------------------
     // Collect owner reservation history
@@ -162,18 +162,7 @@ export class MaterializedHistory extends Db {
             `
         const result = await this.query(query, [address, limit]);
         if (result.rows.length < 1) return [];
-        return result.rows.map(r => ({
-            reservationId: r.reservation_id,
-            amount: r.amount.toString(),
-            bitcoinAddress: r.bitcoin_address,
-            ownerAddress: r.owner_address,
-            registrationChain: r.registration_chain,
-            registrationTxhash: r.registration_txhash,
-            registrationBlockNumber: r.registration_block_number,
-            registrationBlockHash: r.registration_block_hash,
-            registrationFinality: r.finality,
-            registrationTimestamp: r.block_timestamp
-        }));
+        return mapRowsToHistoryRecords(result.rows);
 
     }
 
@@ -195,14 +184,7 @@ export class MaterializedHistory extends Db {
             `
         const result = await this.query(query, [reservations.map(r => r.reservationId), config.btcChainId]);
         if (result.rows.length < 1) return [];
-        return result.rows.map(r => ({
-            reservationId: r.reservation_id,
-            originChain: r.origin_chain,
-            originTxhash: r.origin_txhash,
-            originBlockHash: r.origin_block_hash,
-            originBlockNumber: r.origin_block_number,
-            originFinality: r.finality
-        }));
+        return mapRowsToHistoryRecords(result.rows);
 
     }
 
@@ -223,15 +205,7 @@ export class MaterializedHistory extends Db {
             `
         const result = await this.query(query, [reservations.map(r => r.reservationId)]);
         if (result.rows.length < 1) return [];
-        return result.rows.map(r => ({
-            reservationId: r.reservation_id,
-            state: r.state,
-            targetChain: r.target_chain,
-            targetTxhash: r.target_txhash,
-            targetBlockHash: r.target_block_hash,
-            targetBlockNumber: r.target_block_eight,
-            targetFinality: r.finality
-        }));
+        return mapRowsToHistoryRecords(result.rows);
     }
 
 

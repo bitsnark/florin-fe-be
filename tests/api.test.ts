@@ -41,76 +41,28 @@ describe('API Endpoints', () => {
         });
     });
 
-    describe('GET /positions/owner/:id', () => {
 
-        beforeAll(async () => {
-            await createPosition(mockPosition);
-        });
 
-        it('should return positions for a valid owner ID', async () => {
-            const response = await request(app).get('/positions/owner/owner1');
-            expect(response.status).toBe(200);
-        });
-    });
-
-    describe('GET /positions/active', () => {
-
-        beforeAll(async () => {
-            await createPosition(mockPosition);
-        });
-
-        it('should return active positions', async () => {
-            const response = await request(app).get('/positions/active');
-            expect(response.status).toBe(200);
-        });
-    });
-
-    describe('GET /positions/:id', () => {
+    describe('GET /position/:id', () => {
 
         beforeAll(async () => {
             await createPosition(mockPosition);
         });
 
         it('should return a position by ID', async () => {
-            const response = await request(app).get(`/positions/${fakePositionId}`);
+            const response = await request(app).get(`/position/${fakePositionId}`);
             expect(response.status).toBe(200);
         });
 
         it('should return 404 if position is not found', async () => {
 
-            const response = await request(app).get(`/positions/foo`);
+            const response = await request(app).get(`/position/foo`);
             expect(response.status).toBe(404);
             expect(response.text).toBe('Item not found');
         });
     });
 
-    describe('GET /reservations/owner/:id', () => {
-
-        beforeAll(async () => {
-            await createPosition(mockPosition);
-            await createReservation(mockReservation);
-        });
-
-        it('should return reservations for a valid owner ID', async () => {
-            const response = await request(app).get('/reservations/owner/owner1');
-            expect(response.status).toBe(200);
-        });
-    });
-
-    describe('GET /reservations/active', () => {
-
-        beforeAll(async () => {
-            await createPosition(mockPosition);
-            await createReservation(mockReservation);
-        });
-
-        it('should return active reservations in PENDING state', async () => {
-            const response = await request(app).get('/reservations/active');
-            expect(response.status).toBe(200);
-        });
-    });
-
-    describe('GET /reservations/:id', () => {
+    describe('GET /reservation/:id', () => {
 
         beforeAll(async () => {
             await createPosition(mockPosition);
@@ -118,12 +70,12 @@ describe('API Endpoints', () => {
         });
 
         it('should return a reservation by ID', async () => {
-            const response = await request(app).get('/reservations/1');
+            const response = await request(app).get('/reservation/1');
             expect(response.status).toBe(200);
         });
 
         it('should return 404 if reservation is not found', async () => {
-            const response = await request(app).get('/reservations/foo');
+            const response = await request(app).get('/reservation/foo');
             expect(response.status).toBe(404);
             expect(response.text).toBe('Item not found');
         });
