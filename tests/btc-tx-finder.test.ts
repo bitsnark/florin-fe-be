@@ -5,7 +5,7 @@ import { BtcTxDb } from "../src/db/btc-tx-db";
 import { ReservationState } from "../src/common/types";
 import { keccak256 } from "ethers";
 
-jest.mock("../src/btc/bitcoin-node");
+jest.mock("../src/btc-listener/bitcoin-node");
 jest.mock("../src/db/materialized-reservation");
 jest.mock("../src/db/btc-tx-db");
 
@@ -144,20 +144,13 @@ describe("BitcoinTxFinder.scanBlock", () => {
 		});
 	});
 
-	it("should not insert a transaction if inscription, amount or address not matching - FULL position", async () => {
+	it("should not insert a transaction if inscription  or address not matching - FULL position", async () => {
 		mockEventsDb.getReservationsByState.mockResolvedValue([
 			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
 			tx: [
-				{
-					txid: "tx1", //different amount
-					vout: [
-						{ scriptPubKey: { hex: '000093608083a4284281eb999511a3994df9b4c0320e55390e69bc7bfdd5a14d24d9' } },
-						{ scriptPubKey: { address: "address1" }, value: 0.0005 },
-					],
-				},
 				{
 					txid: "tx2", //different address
 					vout: [

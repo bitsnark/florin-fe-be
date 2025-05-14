@@ -6,8 +6,8 @@ import { config } from '../src/common/config';
 import { sleep } from '../src/common/sleep';
 
 jest.mock('../src/db/block-db');
-jest.mock('../src/btc/bitcoin-node');
-jest.mock('../src/btc/btc-tx-finder');
+jest.mock('../src/btc-listener/bitcoin-node');
+jest.mock('../src/btc-listener/btc-tx-finder');
 jest.mock("../src/common/config");
 jest.mock('../src/common/sleep', () => ({
 	sleep: jest.fn(),
@@ -46,7 +46,7 @@ describe('BtcBlockScanner', () => {
 
 			await btcBlockScanner.processNewBlocks();
 
-			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId);
+			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId, true);
 			expect(bitcoinNodeMock.getBlockCount).toHaveBeenCalled();
 			expect(bitcoinNodeMock.getBlockHash).toHaveBeenCalledTimes(5);
 			expect(bitcoinNodeMock.getBlock).toHaveBeenCalledTimes(5);

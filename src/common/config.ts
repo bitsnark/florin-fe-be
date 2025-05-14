@@ -22,6 +22,8 @@ export interface IConfig {
     openPositionInListenerUrl: string;
     finalityBlocks: number;
     loopIntervalMs: number;
+    throttleInterval: number;
+    retriesOnFail: number;
 
     btcChainId: number,
     btcBlockStart: number,
@@ -54,6 +56,8 @@ export const config: IConfig = {
     openPositionInListenerUrl: parse.string('OPEN_POSITION_IN_LISTENER_URL', 'http://localhost:3000/open-position'),
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
+    throttleInterval: parse.integer('THROTTLE_INTERVAL', 300),
+    retriesOnFail: parse.integer('RETRIES_ON_FAIL', 2),
 
     btcChainId: parse.integer('BTC_CHAIN_ID', -1),
     btcBlockStart: parse.integer('BTC_BLOCK_START', 0),

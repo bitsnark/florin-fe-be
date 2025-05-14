@@ -98,3 +98,4 @@ export interface ReservationStateEvent
 export interface Reservation extends ReservationCreatedEvent, ReservationStateEvent, Pick<Block, 'finality' | 'chainId'> {
 }
 
+export const notFound = -1

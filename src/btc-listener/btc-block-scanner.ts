@@ -22,7 +22,7 @@ export class BtcBlockScanner {
 		let blockStart = config.btcBlockStart;
 		const highest = await this.blockDb.getHighestBlock(config.btcChainId, true);
 		if (highest) blockStart = highest.blockNumber + 1;
-		const blockEnd = 4041779 //await this.btcProvider.getBlockCount();
+		const blockEnd = await this.btcProvider.getBlockCount();
 
 		for (let blockNumber = blockStart; blockNumber <= blockEnd; blockNumber++) {
 			const blockHash = await this.btcProvider.getBlockHash(blockNumber);
@@ -31,7 +31,7 @@ export class BtcBlockScanner {
 				throw new Error(`BTC Block at height ${blockNumber} not found`);
 			}
 
-			await this.bitcoinTxFinder.scanBlock(blockNumber, blockHash, btcBlock.time);
+			await this.bitcoinTxFinder.scanBlock(blockNumber, blockHash);
 
 			await this.blockDb.create({
 				blockHash: btcBlock.hash,
@@ -43,7 +43,7 @@ export class BtcBlockScanner {
 	}
 
 	async finalizeBlocks() {
-		const highest = 4041779 //await this.btcProvider.getBlockCount();
+		const highest = await this.btcProvider.getBlockCount();
 
 		// Get all non-final blocks that are past maturity
 		const blocks = (await this.blockDb.getBlocksByFinality(config.btcChainId, Finality.UNKNOWN))
@@ -66,7 +66,7 @@ export class BtcBlockScanner {
 		// Some sanity
 		for (const blockNumber of Object.keys(heightMap)) {
 			let final = 0;
-			for (const block of heightMap[blockNumber]) {
+			for (const block of heightMap[Number(blockNumber)]) {
 				final += block.finality == Finality.FINAL ? 1 : 0;
 			}
 			if (final == 0) {

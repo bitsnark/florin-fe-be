@@ -4,7 +4,7 @@ import { Db } from "./db";
 export interface IBlockDb {
   create(block: Block): Promise<void>;
   getByHash(blockHash: string): Promise<Block | null>;
-  updateFinality(blockHash: string, finality: Finality);
+  updateFinality(blockHash: string, finality: Finality): Promise<void>;
   getBlocksByFinality(chainId: number, finality: Finality): Promise<Block[]>;
   getHighestBlock(chainId: number, finalityFlag?: boolean): Promise<Block>;
 }

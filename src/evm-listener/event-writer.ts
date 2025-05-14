@@ -4,7 +4,7 @@ import { EventsDb } from "../db/events-db";
 import { Finality } from "../common/types";
 
 export interface IEventWriter {
-    parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription);
+    parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription): Promise<void>;
 }
 
 export class EventWriter implements IEventWriter {
@@ -79,15 +79,19 @@ export class EventWriter implements IEventWriter {
         switch (parsedLog.name) {
             case 'PositionCreated':
                 this.positionCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                console.log(`parseEvent: PositionCreated  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'PositionStatusChanged':
                 this.positionStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                console.log(`parseEvent: PositionStatusChanged  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationCreated':
                 this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                console.log(`parseEvent: ReservationCreated  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationStatusChanged':
                 this.reservationStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                console.log(`parseEvent: ReservationStatusChanged  (info only)\n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
         }
     }

@@ -1,15 +1,16 @@
 import { BlockScanner } from "../src/evm-listener/block-scanner";
 import { IBlockDb } from "../src/db/block-db";
-import { IBlockProvider } from "../src/evm-listener/block-provider";
+import { IBlockProvider, LogDescriptionWithTxhash } from "../src/evm-listener/block-provider";
 import { IEventWriter } from "../src/evm-listener/event-writer";
 import { config } from "../src/common/config";
 import { Finality } from "../src/common/types";
 import { jest, describe, beforeEach, it, expect } from "@jest/globals";
+import { Log, LogDescription } from "ethers";
 
 jest.mock("../src/db/block-db");
-jest.mock("../src/block-provider");
-jest.mock("../src/event-writer");
-jest.mock("../src/common/config");
+jest.mock("../src/evm-listener/block-provider");
+jest.mock("../src/evm-listener/event-writer");
+jest.mock("../src/evm-listener/common/config");
 
 describe("BlockScanner", () => {
     let blockDb: jest.Mocked<IBlockDb>;
@@ -50,13 +51,13 @@ describe("BlockScanner", () => {
                     name: "event1",
                     topic: "topic1",
                     txhash: "0xabc",
-                    args: []
+                    args: [] as unknown as LogDescription[],
                 },
                 {
                     name: "event2",
                     topic: "topic2",
                     txhash: "0xabc",
-                    args: []
+                    args: [] as unknown as LogDescription[],
                 },
             ];
 

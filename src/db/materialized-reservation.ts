@@ -1,3 +1,5 @@
+import { convertBytes32ToP2TRAddress } from '../common/bech32';
+import { config } from '../common/config';
 import { Finality, Position, PositionState, Reservation, ReservationState } from '../common/types';
 import { Db } from "./db";
 
@@ -17,6 +19,16 @@ function rowToReservation(row: any): Reservation {
         chainId: row.chain_id,
     };
 }
+
+export interface OpenReservation {
+    reservationId: string,
+    bitcoinAddress: string,
+    amount: bigint,
+    isInscription: boolean,
+    txid: string,
+    positionId: string
+}
+
 
 export class MaterializedReservation extends Db {
 
@@ -67,5 +79,41 @@ export class MaterializedReservation extends Db {
 
     async getReservationByOwner(ownerAddress: string, finalityFlag?: boolean): Promise<Reservation[]> {
         return (await this.getAllReservations(finalityFlag)).filter(r => r.ownerAddress == ownerAddress);
+    }
+
+    async getUnfulfilledReservations(): Promise<OpenReservation[]> {
+        const query = `
+        SELECT DISTINCT ON (rce.reservation_id)
+            rce.reservation_id,
+			rce.bitcoin_address,
+			rce.amount,
+			rce.is_inscription,
+            rce.position_id,
+			btc.txid
+        FROM reservation_created_events rce
+		inner join blocks br
+		ON rce.block_hash = br.block_hash
+		left outer join
+		(select bb.finality btc_finality,
+            bb.block_number,
+            bb.chain_id,
+		txid,
+		reservation_id
+		from bitcoin_txs bt  , blocks bb
+        where bt.block_hash = bb.block_hash) as btc
+		ON rce.reservation_id = btc.reservation_id
+        WHERE br.chain_id =$1
+        AND btc_finality <> 'REVERTED' OR btc_finality IS NULL
+	    AND br.finality <> 'REVERTED'
+        ORDER BY rce.reservation_id DESC;`
+        const result = await this.query(query, [config.chainId]);
+        return result.rows.map(row => ({
+            reservationId: row.reservation_id,
+            bitcoinAddress: convertBytes32ToP2TRAddress(row.bitcoin_address),
+            amount: row.amount,
+            isInscription: row.is_inscription,
+            txid: row.txid,
+            positionId: row.position_id
+        }));
     }
 }
