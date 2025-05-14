@@ -6,11 +6,12 @@ import { config } from "../src/common/config";
 import { Finality } from "../src/common/types";
 import { jest, describe, beforeEach, it, expect } from "@jest/globals";
 import { Log, LogDescription } from "ethers";
+import { time } from "console";
 
 jest.mock("../src/db/block-db");
 jest.mock("../src/evm-listener/block-provider");
 jest.mock("../src/evm-listener/event-writer");
-jest.mock("../src/evm-listener/common/config");
+jest.mock("../src/common/config");
 
 describe("BlockScanner", () => {
     let blockDb: jest.Mocked<IBlockDb>;
@@ -83,7 +84,7 @@ describe("BlockScanner", () => {
         it("should process new blocks and save them to the database", async () => {
             const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL, blockTimestamp: '1234567890' };
             const currentBlockNumber = 10;
-            const evmBlock = { hash: "0xabc" };
+            const evmBlock = { hash: "0xabc", timestamp: 212312313 };
 
             blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);
             provider.getBlockNumber.mockResolvedValue(currentBlockNumber);
@@ -101,6 +102,7 @@ describe("BlockScanner", () => {
                     chainId: config.chainId,
                     blockNumber,
                     finality: Finality.UNKNOWN,
+                    timestamp: evmBlock.timestamp.toString()
                 });
             }
         });

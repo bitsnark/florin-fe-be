@@ -95,42 +95,16 @@ export function setApi(app: Express) {
         res.send(indexGreeting);
     });
 
-    app.get('/positions/owner/:id', async (req, res) => {
+
+    app.get('/position/:id', async (req, res) => {
         const finalityFlag = !!req.query.finalityFlag;
         const { id } = req.params;
         if (!id) {
-            res.status(400).send('ID is required');
+            res.status(400).send('id (of position) is required');
             return;
         }
         try {
-            const ret = await materializedPosition.getPositionsByOwner(id, finalityFlag);
-            if (ret) res.send(jsonStringifyCustom(ret));
-        } catch (e) {
-            console.error(e);
-            res.status(500).send('Internal Server Error');
-        }
-    });
-
-    app.get('/positions/active', async (req, res) => {
-        try {
-            const finalityFlag = !!req.query.finalityFlag;
-            const ret = await materializedPosition.getActivePositions(finalityFlag);
-            if (ret) res.send(jsonStringifyCustom(ret));
-        } catch (e) {
-            console.error(e);
-            res.status(500).send('Internal Server Error');
-        }
-    });
-
-    app.get('/positions/:id', async (req, res) => {
-        const finalityFlag = !!req.query.finalityFlag;
-        const { id } = req.params;
-        if (!id) {
-            res.status(400).send('ID is required');
-            return;
-        }
-        try {
-            const item = await materializedPosition.getPositionById(id, finalityFlag);
+            const item = await materializedPosition.getPositionRecord(id, finalityFlag);
             if (item) {
                 res.send(jsonStringifyCustom(item));
             } else {
@@ -142,42 +116,16 @@ export function setApi(app: Express) {
         }
     });
 
-    app.get('/reservations/owner/:id', async (req, res) => {
+
+    app.get('/reservation/:id', async (req, res) => {
         const finalityFlag = !!req.query.finalityFlag;
         const { id } = req.params;
         if (!id) {
-            res.status(400).send('ID is required');
+            res.status(400).send('id (of reservation) is required');
             return;
         }
         try {
-            const ret = await materializedReservation.getReservationByOwner(id, finalityFlag);
-            if (ret) res.send(jsonStringifyCustom(ret));
-        } catch (error) {
-            console.log(error);
-            res.status(500).send('Internal Server Error');
-        }
-    });
-
-    app.get('/reservations/active', async (req, res) => {
-        try {
-            const finalityFlag = !!req.query.finalityFlag;
-            const ret = await materializedReservation.getReservationsByState(ReservationState.PENDING, finalityFlag);
-            if (ret) res.send(jsonStringifyCustom(ret));
-        } catch (error) {
-            console.log(error);
-            res.status(500).send('Internal Server Error');
-        }
-    });
-
-    app.get('/reservations/:id', async (req, res) => {
-        const finalityFlag = !!req.query.finalityFlag;
-        const { id } = req.params;
-        if (!id) {
-            res.status(400).send('ID is required');
-            return;
-        }
-        try {
-            const item = await materializedReservation.getReservationById(id, finalityFlag);
+            const item = await materializedReservation.getReservationRecord(id, finalityFlag);
             if (item) {
                 res.send(jsonStringifyCustom(item));
             } else {
@@ -189,14 +137,6 @@ export function setApi(app: Express) {
         }
     });
 
-    app.post('/positions', async (req, res) => {
-        try {
-            throw new Error('Not implemented');
-        } catch (error) {
-            console.log(error);
-            res.status(500).send('Internal Server Error');
-        }
-    });
 
     app.get('/history/:address', async (req, res) => {
         const finalityFlag = !!req.query.finalityFlag;
@@ -247,6 +187,10 @@ export function setApi(app: Express) {
             console.error(e);
             res.status(500).send('Internal Server Error');
         }
+    });
+
+    app.use((req, res) => {
+        res.status(500).send('Internal Server Error');
     });
 
 }
