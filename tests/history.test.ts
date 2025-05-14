@@ -7,7 +7,7 @@ import { config } from '../src/common/config';
 describe('History API Test', () => {
 	let blockDb = new BlockDb();
 	let historyDb = new MaterializedHistory();
-	let evmBlock0, evmBlock1, evmBlock2, btcBlock0;
+	let evmBlock0: number, evmBlock1: number, evmBlock2: number, btcBlock0: number;
 
 	const ownerAddress = '0xevmOwnerAddress';
 

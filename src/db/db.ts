@@ -51,7 +51,7 @@ export class Db {
             }
             return { rows: objarray };
         } catch (error) {
-            console.error(error.message);
+            console.error((error as Error).message);
             console.error('SQL: ', sql);
             console.error('params: ', params);
             throw error;

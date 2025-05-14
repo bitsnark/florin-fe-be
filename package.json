@@ -8,7 +8,7 @@
     "test": "jest --detectOpenHandles",
     "postgres": "./scripts/postgres.sh",
     "build": "tsc",
-    "start": "ts-node ./src/api/index.ts"
+    "start": "ts-node ./src/main.ts"
   },
   "repository": {
     "type": "git",
@@ -22,10 +22,12 @@
   "homepage": "https://github.com/bitsnark/florin-fe-be#readme",
   "devDependencies": {
     "@jest/globals": "29.7.0",
+    "@types/cors": "^2.8.18",
     "@types/express": "5.0.1",
     "@types/jest": "29.5.14",
     "@types/node": "20.16.10",
     "@types/pg": "8.11.11",
+    "@types/supertest": "^6.0.3",
     "jest": "29.7.0",
     "sinon": "20.0.0",
     "supertest": "7.1.0",
@@ -36,6 +38,7 @@
     "axios": "1.9.0",
     "bech32": "2.0.0",
     "bitcoin-core": "5.0.0",
+    "cors": "^2.8.5",
     "dotenv": "16.4.7",
     "ethers": "6.13.5",
     "express": "4.21.2",

@@ -1,5 +1,5 @@
 import { config } from "../common/config";
-import { IBlockDb } from "../db/block-db";
+import { BlockDb, IBlockDb } from "../db/block-db";
 import { Block, Finality } from '../common/types';
 import { sleep } from "../common/sleep";
 import { BitcoinTxFinder } from "./btc-tx-finder";
@@ -19,9 +19,8 @@ export class BtcBlockScanner {
 	}
 
 	async processNewBlocks() {
-
 		let blockStart = config.btcBlockStart;
-		const highest = await this.blockDb.getHighestBlock(config.btcChainId);
+		const highest = await this.blockDb.getHighestBlock(config.btcChainId, true);
 		if (highest) blockStart = highest.blockNumber + 1;
 		const blockEnd = await this.btcProvider.getBlockCount();
 
@@ -36,9 +35,10 @@ export class BtcBlockScanner {
 
 			await this.blockDb.create({
 				blockHash: btcBlock.hash,
-				chainId: config.chainId,
+				chainId: config.btcChainId,
 				blockNumber,
-				finality: Finality.UNKNOWN
+				finality: Finality.UNKNOWN,
+				blockTimestamp: btcBlock.time.toString()
 			});
 		}
 	}
@@ -47,8 +47,8 @@ export class BtcBlockScanner {
 		const highest = await this.btcProvider.getBlockCount();
 
 		// Get all non-final blocks that are past maturity
-		const blocks = (await this.blockDb.getBlocksByFinality(config.chainId, Finality.UNKNOWN))
-			.filter(block => block.blockNumber + config.btcFinalityBlocks < highest);
+		const blocks = (await this.blockDb.getBlocksByFinality(config.btcChainId, Finality.UNKNOWN))
+			.filter(block => block.blockNumber + config.btcFinalityBlocks <= highest);
 
 		// Map them according to height and check if they exist in the node
 		const heightMap: { [key: number]: Block[] } = {};
@@ -67,7 +67,7 @@ export class BtcBlockScanner {
 		// Some sanity
 		for (const blockNumber of Object.keys(heightMap)) {
 			let final = 0;
-			for (const block of heightMap[blockNumber]) {
+			for (const block of heightMap[Number(blockNumber)]) {
 				final += block.finality == Finality.FINAL ? 1 : 0;
 			}
 			if (final == 0) {
@@ -101,4 +101,12 @@ export class BtcBlockScanner {
 			await sleep(config.loopIntervalMs);
 		}
 	}
+}
+
+if (module === require.main) {
+	const blockDb = new BlockDb();
+	const btcNode = new BitcoinNode();
+
+	const scanner = new BtcBlockScanner(blockDb, btcNode);
+	scanner.run();
 }

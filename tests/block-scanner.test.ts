@@ -1,15 +1,16 @@
-import { BlockScanner } from "../src/block-scanner";
+import { BlockScanner } from "../src/evm-listener/block-scanner";
 import { IBlockDb } from "../src/db/block-db";
-import { IBlockProvider } from "../src/block-provider";
-import { IEventWriter } from "../src/event-writer";
+import { IBlockProvider, LogDescriptionWithTxhash } from "../src/evm-listener/block-provider";
+import { IEventWriter } from "../src/evm-listener/event-writer";
 import { config } from "../src/common/config";
 import { Finality } from "../src/common/types";
 import { jest, describe, beforeEach, it, expect } from "@jest/globals";
+import { Log, LogDescription } from "ethers";
 
 jest.mock("../src/db/block-db");
-jest.mock("../src/block-provider");
-jest.mock("../src/event-writer");
-jest.mock("../src/common/config");
+jest.mock("../src/evm-listener/block-provider");
+jest.mock("../src/evm-listener/event-writer");
+jest.mock("../src/evm-listener/common/config");
 
 describe("BlockScanner", () => {
     let blockDb: jest.Mocked<IBlockDb>;
@@ -50,13 +51,13 @@ describe("BlockScanner", () => {
                     name: "event1",
                     topic: "topic1",
                     txhash: "0xabc",
-                    args: []
+                    args: [] as unknown as LogDescription[],
                 },
                 {
                     name: "event2",
                     topic: "topic2",
                     txhash: "0xabc",
-                    args: []
+                    args: [] as unknown as LogDescription[],
                 },
             ];
 
@@ -80,7 +81,7 @@ describe("BlockScanner", () => {
 
     describe("processNewBlocks", () => {
         it("should process new blocks and save them to the database", async () => {
-            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL };
+            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL, blockTimestamp: '1234567890' };
             const currentBlockNumber = 10;
             const evmBlock = { hash: "0xabc" };
 
@@ -105,7 +106,7 @@ describe("BlockScanner", () => {
         });
 
         it("should throw an error if a block is not found", async () => {
-            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN };
+            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN, blockTimestamp: '1234567890' };
             const currentBlockNumber = 10;
 
             blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);

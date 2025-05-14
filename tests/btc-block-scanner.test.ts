@@ -1,13 +1,13 @@
-import { BtcBlockScanner } from '../src/btc/btc_block_scanner';
+import { BtcBlockScanner } from '../src/btc-listener/btc-block-scanner';
 import { IBlockDb } from '../src/db/block-db';
-import { BitcoinNode } from '../src/btc/bitcoin-node';
+import { BitcoinNode } from '../src/btc-listener/bitcoin-node';
 import { Finality } from '../src/common/types';
 import { config } from '../src/common/config';
 import { sleep } from '../src/common/sleep';
 
 jest.mock('../src/db/block-db');
-jest.mock('../src/btc/bitcoin-node');
-jest.mock('../src/btc/btc-tx-finder');
+jest.mock('../src/btc-listener/bitcoin-node');
+jest.mock('../src/btc-listener/btc-tx-finder');
 jest.mock("../src/common/config");
 jest.mock('../src/common/sleep', () => ({
 	sleep: jest.fn(),
@@ -46,7 +46,7 @@ describe('BtcBlockScanner', () => {
 
 			await btcBlockScanner.processNewBlocks();
 
-			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId);
+			expect(blockDbMock.getHighestBlock).toHaveBeenCalledWith(config.btcChainId, true);
 			expect(bitcoinNodeMock.getBlockCount).toHaveBeenCalled();
 			expect(bitcoinNodeMock.getBlockHash).toHaveBeenCalledTimes(5);
 			expect(bitcoinNodeMock.getBlock).toHaveBeenCalledTimes(5);

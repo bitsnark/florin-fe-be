@@ -141,16 +141,8 @@ describe('API Endpoints', () => {
         it('should find users history', async () => {
             const response = await request(app).get('/history/0xevmOwnerAddress');
             expect(response.status).toBe(200);
-            expect((response.text as HistoryRecord[]).length).toBeGreaterThan(0);
+            expect((response.text as unknown as HistoryRecord[]).length).toBeGreaterThan(0);
         });
     });
 
-    describe('GET /limits', () => {
-        it('should return limits always', async () => {
-            const response = await request(app).get('/limits');
-            console.log(response.body);
-            expect(response.status).toBe(200);
-            // expect((response.text as HistoryRecord[]).length).toBeGreaterThan(0);
-        });
-    });
 });

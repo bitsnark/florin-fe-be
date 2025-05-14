@@ -25,6 +25,7 @@ export interface HistoryRecord {
     targetBlockNumber?: number;
     targetFinality?: Finality;
     state?: string;
+    registrationTimestamp?: string;
 }
 
 export class MaterializedHistory extends Db {
@@ -69,7 +70,7 @@ export class MaterializedHistory extends Db {
         SELECT
             position_id, original_amount,token_address, owner_address, bitcoin_address,
             pc.chain_id as registration_chain, pc.txhash as registration_txhash,
-            b.block_number, pc.block_hash as registration_block_hash, finality
+            b.block_number, pc.block_hash as registration_block_hash, finality, b.block_timestamp
         FROM
             position_created_events as pc, blocks as b
         WHERE pc.block_hash = b.block_hash
@@ -91,7 +92,8 @@ export class MaterializedHistory extends Db {
             registrationTxhash: r.registration_txhash,
             registrationBlockHash: r.registration_block_hash,
             registrationBlockNumber: r.block_number,
-            registrationFinality: r.finality
+            registrationFinality: r.finality,
+            registrationTimestamp: r.block_timestamp
         }));
     }
 
@@ -148,7 +150,8 @@ export class MaterializedHistory extends Db {
         SELECT
             reservation_id, amount, bitcoin_address, owner_address,
             b.chain_id as registration_chain, rc.txhash as registration_txhash,
-            b.block_number as registration_block_number, rc.block_hash as registration_block_hash, finality
+            b.block_number as registration_block_number, rc.block_hash as registration_block_hash,
+            finality, b.block_timestamp
         FROM
             reservation_created_events as rc, blocks as b
         WHERE rc.block_hash = b.block_hash
@@ -168,7 +171,8 @@ export class MaterializedHistory extends Db {
             registrationTxhash: r.registration_txhash,
             registrationBlockNumber: r.registration_block_number,
             registrationBlockHash: r.registration_block_hash,
-            registrationFinality: r.finality
+            registrationFinality: r.finality,
+            registrationTimestamp: r.block_timestamp
         }));
 
     }

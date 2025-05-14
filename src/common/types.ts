@@ -8,12 +8,10 @@ export enum Finality {
 export interface Block {
     // Unique id, hex string
     blockHash: string;
-
     chainId: number;
-
     blockNumber: number;
-
     finality: Finality;
+    blockTimestamp: string;
 }
 
 
@@ -73,37 +71,20 @@ export interface PositionStateEvent
 export interface Position extends PositionCreatedEvent, PositionStateEvent, Pick<Block, 'finality'> { }
 
 export enum ReservationState {
-    NONE = 'NONE',
-    PENDING = 'PENDING',
-    EXPIRED = 'EXPIRED',
-    CANCELED = 'CANCELED',
-    SETTLED = 'SETTLED',
+    NONE = '0',
+    PENDING = '1',
+    EXPIRED = '2',
+    CANCELED = '3',
+    SETTLED = '4',
 }
 
 export interface ReservationCreatedEvent extends EventBase {
-    // Unique identifier for this reservation
-    // 32 bytes, hex string
-    reservationId: string;
-
-    // EVM owner of this reservation
-    // EVM address as hex string
-    ownerAddress: string;
-
-    // Unique identifier for the position
-    // 32 bytes, hex string
-    positionId: string;
-
-    // Number of tokens to hold
-    // 10^18 precision
-    amount: bigint;
-
-    // Bitcoin address where BTC is to be sent
-    // 32 bytes, hex string
-    btcAddress: string;
-
-
-    // Partial settlement flag for connected position
-    isInscription: boolean;
+    reservationId: string;// Unique identifier for this reservation. 32 bytes, hex string
+    ownerAddress: string;// EVM address to receive tokens to as hex string
+    positionId: string;// Unique identifier for the position. 32 bytes, hex string
+    amount: bigint;// Number of tokens to receive 10^18 precision
+    btcAddress: string; // Bitcoin address where BTC is to be sent. 32 bytes, hex string
+    isInscription: boolean;// Partial settlement flag for connected position
 }
 
 export interface ReservationStateEvent
@@ -115,3 +96,4 @@ export interface ReservationStateEvent
 export interface Reservation extends ReservationCreatedEvent, ReservationStateEvent, Pick<Block, 'finality' | 'chainId'> {
 }
 
+export const notFound = -1

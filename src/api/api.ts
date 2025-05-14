@@ -77,8 +77,8 @@ import { MaterializedHistory } from '../db/materialized-history';
 import { Express } from 'express';
 import { ReservationState } from '../common/types';
 import { jsonStringifyCustom } from '../common/json';
-import { BalanceFetcher } from '../balance-fetcher';
 import { openPosition } from '../position-opener';
+import { BitcoinNode } from '../btc-listener/bitcoin-node';
 
 
 export const indexGreeting = 'This is the Florin API index';
@@ -88,7 +88,7 @@ export function setApi(app: Express) {
     const materializedPosition = new MaterializedPosition();
     const materializedReservation = new MaterializedReservation();
     const materializedHistory = new MaterializedHistory();
-    const balanceFetcher = new BalanceFetcher();
+    const btcNode = new BitcoinNode();
 
     // sanity
     app.get('/', (req, res): void => {
@@ -207,7 +207,7 @@ export function setApi(app: Express) {
             return;
         }
         try {
-            const history = await materializedHistory.getOwnerHistory(address, finalityFlag)
+            const history = await materializedHistory.getOwnerHistory(address.toLowerCase(), finalityFlag)
             if (history) res.send(jsonStringifyCustom(history));
         } catch (e) {
             console.error(e);
@@ -215,17 +215,16 @@ export function setApi(app: Express) {
         }
     });
 
-
-    app.get('/limits', async (req, res) => {
+    app.get('/btcBlockCount', async (req, res) => {
         try {
-            const balances = await balanceFetcher.getBalances();
-            if (balances) res.json({ data: balances });
-
+            const blockCount = await btcNode.getBlockCount();
+            if (blockCount) res.send(jsonStringifyCustom({ blockCount }));
         } catch (e) {
             console.error(e);
             res.status(500).send('Internal Server Error');
         }
     });
+
 
     app.post('/position', async (req, res) => {
         try {
