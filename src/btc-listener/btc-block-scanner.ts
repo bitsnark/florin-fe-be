@@ -23,6 +23,7 @@ export class BtcBlockScanner {
 		const highest = await this.blockDb.getHighestBlock(config.btcChainId, true);
 		if (highest) blockStart = highest.blockNumber + 1;
 		const blockEnd = await this.btcProvider.getBlockCount();
+		const firstUnknown = blockEnd - config.btcFinalityBlocks;
 
 		for (let blockNumber = blockStart; blockNumber <= blockEnd; blockNumber++) {
 			const blockHash = await this.btcProvider.getBlockHash(blockNumber);
@@ -37,7 +38,7 @@ export class BtcBlockScanner {
 				blockHash: btcBlock.hash,
 				chainId: config.btcChainId,
 				blockNumber,
-				finality: Finality.UNKNOWN,
+				finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
 				blockTimestamp: btcBlock.time.toString()
 			});
 		}
@@ -55,13 +56,16 @@ export class BtcBlockScanner {
 		for (const block of blocks) {
 			heightMap[block.blockNumber] = heightMap[block.blockNumber] ?? [];
 			heightMap[block.blockNumber].push(block);
-			const btcBlock = await this.btcProvider.getBlock(block.blockHash, BlockVerbosity.json);
-			if (btcBlock) {
-				block.finality = Finality.FINAL;
-				if (btcBlock.height != block.blockNumber) {
-					throw new Error(`Block in DB has incorrect height: ${block.blockHash}`);
+			try {
+				//if block does not exists in the node, it will throw
+				const btcBlock = await this.btcProvider.getBlock(block.blockHash, BlockVerbosity.json);
+				if (btcBlock) {
+					block.finality = Finality.FINAL;
+					if (btcBlock.height != block.blockNumber) {
+						throw new Error(`Block in DB has incorrect height: ${block.blockHash}`);
+					}
 				}
-			}
+			} catch (error) { continue }
 		}
 
 		// Some sanity

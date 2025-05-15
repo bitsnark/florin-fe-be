@@ -70,13 +70,16 @@ export class BlockScanner {
         for (const block of blocks) {
             heightMap[block.blockNumber] = heightMap[block.blockNumber] ?? [];
             heightMap[block.blockNumber].push(block);
-            const evmBlock = await this.provider.getBlockByHash(block.blockHash);
-            if (evmBlock) {
-                block.finality = Finality.FINAL;
-                if (evmBlock.number != block.blockNumber) {
-                    throw new Error(`fe-be Block in DB has incorrect height: ${block.blockHash}`);
+            try {
+                // If block does not exists in the node, it will throw
+                const evmBlock = await this.provider.getBlockByHash(block.blockHash);
+                if (evmBlock) {
+                    block.finality = Finality.FINAL;
+                    if (evmBlock.number != block.blockNumber) {
+                        throw new Error(`fe-be Block in DB has incorrect height: ${block.blockHash}`);
+                    }
                 }
-            }
+            } catch (error) { continue }
         }
 
         // Some sanity

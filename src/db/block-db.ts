@@ -12,12 +12,29 @@ export interface IBlockDb {
 export class BlockDb extends Db implements IBlockDb {
 
   async create(block: Block): Promise<void> {
-    const query = `
+    // Revert blocks with the same height
+    const update = `UPDATE blocks SET finality = 'REVERTED' WHERE chain_id = $1 and block_number = $2`;
+
+    // Insert new or update returning canonical with updated timestamp and state
+    const insert = `
         INSERT INTO blocks (block_hash, chain_id, block_number, finality, block_timestamp)
         VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (block_hash) DO NOTHING
-      `;
-    await this.query(query, [block.blockHash, block.chainId, block.blockNumber, block.finality, block.blockTimestamp]);
+        ON CONFLICT (block_hash)
+        DO UPDATE SET
+          chain_id = $2,
+          block_number = $3,
+          finality = $4,
+          block_timestamp = $5`;
+    await this.runTransaction([
+      {
+        sql: update,
+        args: [block.chainId, block.blockNumber]
+      },
+      {
+        sql: insert,
+        args: [block.blockHash, block.chainId, block.blockNumber, block.finality, block.blockTimestamp]
+      }
+    ]);
   }
 
   async getByHash(blockHash: string): Promise<Block> {

@@ -73,4 +73,25 @@ export class Db {
             await client.end();
         }
     }
+
+    protected async runTransaction(queries: Query[]) {
+        const client = await this.connect();
+        let i = 0;
+        try {
+            await client.query('BEGIN');
+
+
+            for (i; i < queries.length; i++) {
+                await client.query(queries[i].sql, queries[i].args);
+            }
+
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error(`Failed to execute query ${i}: `, (error as { message: string }).message ?? '');
+            console.error(queries[i].sql, queries[i].args);
+        } finally {
+            await client.end();
+        }
+    }
 }
