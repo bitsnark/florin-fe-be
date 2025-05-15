@@ -1,14 +1,10 @@
 import { BlockVerbosity, Vout } from "../common/bitcoin-core-types";
 import { BitcoinNode } from "./bitcoin-node";
-import { AbiCoder, keccak256 } from "ethers";
-import { notFound, ReservationState } from "../common/types";
+import { notFound } from "../common/types";
 import { MaterializedReservation, OpenReservation } from "../db/materialized-reservation";
 import { BtcTxDb } from "../db/btc-tx-db";
-import { Reservation } from "../common/types";
-import { convertBytes32ToP2TRAddress } from "../common/bech32";
 import { btcToSatoshi } from "../common/btc-utils";
 import { config } from "../common/config";
-
 
 
 export interface UnfulfilledReservation {
@@ -70,7 +66,8 @@ export class BitcoinTxFinder {
 				blockHeight: blockHeight,
 				targetChainId: config.chainId,
 				reservationId: res.reservationId,
-				positionId: res.positionId
+				positionId: res.positionId,
+				amount: btcToSatoshi(tx.vout[res.voutIndex].value),
 			})
 
 
