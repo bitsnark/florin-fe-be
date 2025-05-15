@@ -200,7 +200,7 @@ export class MaterializedHistory extends Db {
         FROM reservation_state_events as rs, blocks as b
         WHERE rs.block_hash = b.block_hash
             AND reservation_id = ANY($1)
-            AND rs.state <> 'PENDING'
+            AND rs.state <> '1'
             AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
             `
         const result = await this.query(query, [reservations.map(r => r.reservationId)]);

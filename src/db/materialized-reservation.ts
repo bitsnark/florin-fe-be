@@ -1,7 +1,6 @@
 import { convertBytes32ToP2TRAddress } from '../common/bech32';
 import { config } from '../common/config';
-import { Finality, Position, PositionState, Reservation, ReservationState } from '../common/types';
-import { Db } from "./db";
+import { Reservation, ReservationState } from '../common/types';
 import { HistoryRecord, mapRowsToHistoryRecords, MaterializedHistory } from './materialized-history';
 
 function rowToReservation(row: any): Reservation {
@@ -49,11 +48,11 @@ export class MaterializedReservation extends MaterializedHistory {
             }
         }
 
-        const ReservationsStatus = await this.getReservationLastStatus([reservation], finalityFlag);
-        if (ReservationsStatus.length === 1) {
+        const rs = await this.getReservationLastStatus([reservation], finalityFlag);
+        if (rs.length === 1) {
             reservation = {
                 ...reservation,
-                ...ReservationsStatus[0]
+                ...rs[0]
             }
         }
 

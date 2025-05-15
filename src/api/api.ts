@@ -75,7 +75,6 @@ import { MaterializedPosition } from '../db/materlialized-position';
 import { MaterializedReservation } from '../db/materialized-reservation';
 import { MaterializedHistory } from '../db/materialized-history';
 import { Express } from 'express';
-import { ReservationState } from '../common/types';
 import { jsonStringifyCustom } from '../common/json';
 import { openPosition } from '../position-opener';
 import { BitcoinNode } from '../btc-listener/bitcoin-node';
