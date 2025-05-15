@@ -71,11 +71,11 @@ export interface PositionStateEvent
 export interface Position extends PositionCreatedEvent, PositionStateEvent, Pick<Block, 'finality'> { }
 
 export enum ReservationState {
-    NONE = 'NONE',
-    PENDING = 'PENDING',
-    EXPIRED = 'EXPIRE',
-    CANCELED = 'CANCELED',
-    SETTLED = 'SETTLED',
+    NONE = '0',
+    PENDING = '1',
+    EXPIRED = '2',
+    CANCELED = '3',
+    SETTLED = '4',
 }
 
 export interface ReservationCreatedEvent extends EventBase {

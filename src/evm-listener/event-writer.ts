@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import { config } from "../common/config";
 import { EventsDb } from "../db/events-db";
-import { Finality } from "../common/types";
 
 export interface IEventWriter {
     parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription): Promise<void>;
