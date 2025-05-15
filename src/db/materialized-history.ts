@@ -23,6 +23,7 @@ export interface HistoryRecord {
     originBlockHash?: string;
     originBlockNumber?: string;
     originFinality?: Finality;
+    originAmount?: string;
     targetChain?: number;
     targetTxhash?: string;
     targetBlockHash?: string;
@@ -75,6 +76,7 @@ export class MaterializedHistory extends Db {
                 originBlockNumber: p.registrationBlockNumber,
                 originBlockHash: p.registrationBlockHash,
                 originFinality: p.registrationFinality,
+                originAmount: p.amount,
                 ...btcTx
             }
         })
@@ -174,6 +176,7 @@ export class MaterializedHistory extends Db {
             bt.txid as origin_txhash,
             b.block_number as origin_block_number,
             bt.block_hash as origin_block_hash,
+            bt.sat_amount as origin_amount,
             finality
         FROM
             bitcoin_txs as bt , blocks as b

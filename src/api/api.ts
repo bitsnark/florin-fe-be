@@ -124,9 +124,10 @@ export function setApi(app: Express) {
             return;
         }
         try {
-            const item = await materializedReservation.getReservationRecord(id, finalityFlag);
-            if (item) {
-                res.send(jsonStringifyCustom(item));
+            const blockCount = await btcNode.getBlockCount()
+            const data = await materializedReservation.getReservationRecord(id, finalityFlag);
+            if (data) {
+                res.send(jsonStringifyCustom({ data, blockCount }));
             } else {
                 res.status(404).send('Item not found');
             }

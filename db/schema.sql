@@ -127,6 +127,7 @@ CREATE TABLE bitcoin_txs (
     target_chain_id CHARACTER VARYING NOT NULL,
     reservation_id CHARACTER VARYING NOT NULL,
     position_id CHARACTER VARYING NOT NULL,
+    sat_amount BIGINT NOT NULL,
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (txid, block_hash)
 );
