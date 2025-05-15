@@ -33,10 +33,6 @@ export interface IConfig {
     btcNodeHost: string,
 
     httpPort: number;
-    httpsPort: number;
-
-    btcMaxAllowedSatTransfer: number;
-    evmMaxAllowedSatTransfer: number;
 }
 
 export const config: IConfig = {
@@ -67,9 +63,4 @@ export const config: IConfig = {
     btcNodeHost: parse.string('BTC_NODE_HOST', ''),
 
     httpPort: parse.integer('HTTP_PORT', 800),
-    httpsPort: parse.integer('HTTPS_PORT', 4430),
-    btcMaxAllowedSatTransfer: parse.integer('BTC_MAX_ALLOWED_TRANSFER', 5000000),
-    evmMaxAllowedSatTransfer: parse.integer('EVM_MAX_ALLOWED_TRANSFER', 5000000),
-
-
 }
