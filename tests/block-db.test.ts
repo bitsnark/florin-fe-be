@@ -9,7 +9,7 @@ const fakeBlock = {
     chainId: 20002,
     blockNumber: 1,
     finality: Finality.UNKNOWN,
-    blockTimestamp: new Date().toISOString()
+    blockTimestamp: BigInt(new Date().getTime())
 };
 
 describe('Block DB', () => {

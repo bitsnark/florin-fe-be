@@ -82,7 +82,7 @@ describe("BlockScanner", () => {
 
     describe("processNewBlocks", () => {
         it("should process new blocks and save them to the database", async () => {
-            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL, blockTimestamp: '1234567890' };
+            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL, blockTimestamp: 1234567890n };
             const currentBlockNumber = 10;
             const evmBlock = { hash: "0xabc", timestamp: 212312313 };
 
@@ -108,7 +108,7 @@ describe("BlockScanner", () => {
         });
 
         it("should throw an error if a block is not found", async () => {
-            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN, blockTimestamp: '1234567890' };
+            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN, blockTimestamp: 1234567890n };
             const currentBlockNumber = 10;
 
             blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);

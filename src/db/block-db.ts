@@ -28,7 +28,7 @@ export class BlockDb extends Db implements IBlockDb {
     await this.runTransaction([
       {
         sql: update,
-        args: [block.chainId, block.blockNumber]
+        args: [block.chainId, block.blockNumber, block.finality, block.blockTimestamp]
       },
       {
         sql: insert,

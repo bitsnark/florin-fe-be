@@ -3,7 +3,20 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: ['.env.test', '.env.local', '.env'] });
 
-
+export const BtcAddressPrefixes = {
+    'MAINNET': {
+        p2pkh: { versionByte: 0x00, prefixes: ['1'] },
+        p2sh: { versionByte: 0x05, prefixes: ['3'] },
+        bech32: 'bc',
+        bech32m: 'bc',
+    },
+    'TESTNET': {
+        p2pkh: { versionByte: 0x6F, prefixes: ['m', 'n'] },
+        p2sh: { versionByte: 0xC4, prefixes: ['2'] },
+        bech32: 'tb',
+        bech32m: 'tb',
+    }
+}
 
 export interface IConfig {
 
@@ -20,10 +33,12 @@ export interface IConfig {
     chainId: number;
     contractAddress: string;
     openPositionInListenerUrl: string;
+    evmTimestampSafetyMarginSec: number;
     finalityBlocks: number;
     loopIntervalMs: number;
     throttleInterval: number;
     retriesOnFail: number;
+    btcAddressPrefixes: string,
 
     btcChainId: number,
     btcBlockStart: number,
@@ -48,6 +63,7 @@ export const config: IConfig = {
     blockStart: parse.integer('BLOCK_START', 0),
     providerUrl: parse.string('PROVIDER_URL', 'http://localhost:8545'),
     chainId: parse.integer('CHAIN_ID', 31337),
+    btcAddressPrefixes: parse.string('BTC_ADDRESS_PREFIXES', 'TESTNET'),
     contractAddress: parse.string('CONTRACT_ADDRESS', '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'),
     openPositionInListenerUrl: parse.string('OPEN_POSITION_IN_LISTENER_URL', 'http://localhost:3000/open-position'),
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
@@ -61,6 +77,8 @@ export const config: IConfig = {
     btcNodeUsername: parse.string('BTC_NODE_USERNAME', ''),
     btcNodePassword: parse.string('BTC_NODE_PASSWORD', ''),
     btcNodeHost: parse.string('BTC_NODE_HOST', ''),
+
+    evmTimestampSafetyMarginSec: parse.integer('EVM_TIMESTAMP_SAFETY_MARGIN_SEC', 3600),
 
     httpPort: parse.integer('HTTP_PORT', 800),
 }

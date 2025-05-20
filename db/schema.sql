@@ -16,7 +16,7 @@ CREATE TABLE blocks (
     chain_id INTEGER NOT NULL,
     block_number INTEGER NOT NULL,
     finality TEXT NOT NULL,
-    block_timestamp CHARACTER VARYING NOT NULL
+    block_timestamp BIGINT NOT NULL
 );
 
 CREATE INDEX idx_blocks_chain_id ON blocks (chain_id);
@@ -113,8 +113,6 @@ CREATE INDEX idx_reservation_state_events_reservation_id ON reservation_state_ev
 CREATE INDEX idx_reservation_state_events_state ON reservation_state_events (state);
 CREATE INDEX idx_reservation_state_events_block_number ON reservation_state_events (block_number);
 CREATE INDEX idx_reservation_state_events_block_hash ON reservation_state_events (block_hash);
-
-
 
 -- ============================
 -- Table of btc transactions (payment for reservations)

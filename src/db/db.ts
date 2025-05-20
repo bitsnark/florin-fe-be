@@ -1,7 +1,7 @@
 import { config } from '../common/config';
 import { connect } from 'ts-postgres';
 
-export type DbValue = string | number | boolean | object | null | undefined;
+export type DbValue = string | number | boolean | object | null | undefined | bigint;
 export type QueryArgs = DbValue[];
 export interface Query {
     sql: string;

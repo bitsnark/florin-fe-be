@@ -30,7 +30,7 @@ export async function createPosition(position: any) {
         chainId: position.chainId,
         blockNumber: position.blockNumber ? position.blockNumber : fakeBlockNumber,
         finality: Finality.FINAL,
-        blockTimestamp: new Date().toISOString()
+        blockTimestamp: BigInt(new Date().getDate())
     });
 }
 
@@ -80,7 +80,7 @@ export async function createBlock(block: any) {
         chainId: block.chainId,
         blockNumber: block.blockNumber ? block.blockNumber : fakeBlockNumber,
         finality: Finality.FINAL,
-        blockTimestamp: new Date().toISOString()
+        blockTimestamp: BigInt(new Date().getTime())
     });
 
 }
@@ -102,7 +102,8 @@ export async function createBtcTx(btcTx: any) {
         blockHeight: btcTx.blockNumber,
         targetChainId: btcTx.targetChainId,
         reservationId: btcTx.reservationId,
-        positionId: btcTx.positionId
+        positionId: btcTx.positionId,
+        amount: btcTx.amount
     });
 
 }
