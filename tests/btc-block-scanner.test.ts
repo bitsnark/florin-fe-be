@@ -39,10 +39,10 @@ describe('BtcBlockScanner', () => {
 
 	describe('processNewBlocks', () => {
 		it('should process new blocks and save them to the database', async () => {
-			blockDbMock.getHighestBlock.mockResolvedValue({ blockNumber: 100 } as any);
+			blockDbMock.getHighestBlock.mockResolvedValue({ blockNumber: 100, blockTimestamp: 1000n } as any);
 			bitcoinNodeMock.getBlockCount.mockResolvedValue(105);
 			bitcoinNodeMock.getBlockHash.mockResolvedValue('mockBlockHash');
-			bitcoinNodeMock.getBlock.mockResolvedValue({ hash: 'mockBlockHash' } as any);
+			bitcoinNodeMock.getBlock.mockResolvedValue({ hash: 'mockBlockHash', time: 100n } as any);
 
 			await btcBlockScanner.processNewBlocks();
 
@@ -69,11 +69,11 @@ describe('BtcBlockScanner', () => {
 		it('should finalize blocks and update their finality in the database', async () => {
 			bitcoinNodeMock.getBlockCount.mockResolvedValue(200);
 			blockDbMock.getBlocksByFinality.mockResolvedValue([
-				{ blockNumber: 190, blockHash: 'mockBlockHash1', finality: Finality.UNKNOWN } as any,
-				{ blockNumber: 191, blockHash: 'mockBlockHash2', finality: Finality.UNKNOWN } as any,
+				{ blockNumber: 190, blockHash: 'mockBlockHash1', finality: Finality.UNKNOWN, time: 1000n } as any,
+				{ blockNumber: 191, blockHash: 'mockBlockHash2', finality: Finality.UNKNOWN, time: 1000n } as any,
 			]);
-			bitcoinNodeMock.getBlock.mockResolvedValueOnce({ height: 190 } as any);
-			bitcoinNodeMock.getBlock.mockResolvedValueOnce({ height: 191 } as any);
+			bitcoinNodeMock.getBlock.mockResolvedValueOnce({ height: 190, time: 1000n } as any);
+			bitcoinNodeMock.getBlock.mockResolvedValueOnce({ height: 191, time: 1000n } as any);
 
 
 			await btcBlockScanner.finalizeBlocks();
@@ -86,7 +86,7 @@ describe('BtcBlockScanner', () => {
 		it('should throw an error if no final blocks exist for a height', async () => {
 			bitcoinNodeMock.getBlockCount.mockResolvedValue(200);
 			blockDbMock.getBlocksByFinality.mockResolvedValue([
-				{ blockNumber: 190, blockHash: 'mockBlockHash1', finality: Finality.UNKNOWN } as any,
+				{ blockNumber: 190, blockHash: 'mockBlockHash1', finality: Finality.UNKNOWN, time: 1000n } as any,
 			]);
 			bitcoinNodeMock.getBlock.mockResolvedValue(null);
 

@@ -4,6 +4,11 @@ import { Db } from "./db";
 export class EventsDb extends Db {
 
   async positionCreated(event: Exclude<PositionCreatedEvent, 'eventId'>): Promise<number> {
+    //overflow temp fix
+    if (event.originalAmount > BigInt(2) ** BigInt(63) - BigInt(1)) {
+      event.originalAmount = BigInt(0);
+    }
+
     const query = `
             INSERT INTO position_created_events
             (position_id, chain_id, owner_address, token_address, original_amount, bitcoin_address, exchange_rate, block_number, block_hash, txhash, partial_settlement)
@@ -16,7 +21,7 @@ export class EventsDb extends Db {
       event.chainId,
       event.ownerAddress,
       event.tokenAddress,
-      event.originalAmount < 5000000000n ? event.originalAmount : 5000000000n, ///TO REMOVE!!
+      event.originalAmount,
       event.bitcoinAddress,
       event.exchangeRate,
       event.blockNumber,

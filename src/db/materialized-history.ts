@@ -89,9 +89,9 @@ export class MaterializedHistory extends Db {
     protected async getOwnerFullPositions(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
         const query = `
         SELECT
-            position_id, original_amount,token_address, owner_address, bitcoin_address,
+            position_id, original_amount as amount,token_address, owner_address, bitcoin_address,
             pc.chain_id as registration_chain, pc.txhash as registration_txhash,
-            b.block_number, pc.block_hash as registration_block_hash, finality, b.block_timestamp
+            b.block_number as registration_block_number, pc.block_hash as registration_block_hash, finality, b.block_timestamp
         FROM
             position_created_events as pc, blocks as b
         WHERE pc.block_hash = b.block_hash
@@ -197,7 +197,7 @@ export class MaterializedHistory extends Db {
             rs.reservation_id,
             b.chain_id as target_chain,
             rs.txhash as target_txhash,
-            b.block_number as target_block_eight,
+            b.block_number as target_block_number,
             rs.block_hash as target_block_hash,
             finality
         FROM reservation_state_events as rs, blocks as b

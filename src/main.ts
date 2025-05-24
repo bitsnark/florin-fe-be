@@ -21,12 +21,6 @@ async function main() {
 		const blockScanner = new BlockScanner(blockDb, provider, eventWriter);
 		blockScanner.run();
 
-		await new Promise((resolve) => {
-			setTimeout(() => {
-				console.log('BlockScanner started successfully.');
-				resolve(null);
-			}, 10000);
-		});
 		// Initialize and run the BtcBlockScanner
 		console.log('Starting the BtcBlockScanner...');
 		const btcNode = new BitcoinNode();

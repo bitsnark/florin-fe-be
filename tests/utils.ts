@@ -24,14 +24,16 @@ export async function createPosition(position: any) {
 
     await positionStateChanged(position)
 
-    const blockDb = new BlockDb();
-    await blockDb.create({
-        blockHash: fakeBlockHash,
-        chainId: position.chainId,
-        blockNumber: position.blockNumber ? position.blockNumber : fakeBlockNumber,
-        finality: Finality.FINAL,
-        blockTimestamp: BigInt(new Date().getDate())
-    });
+    if (!position.blockNumber) {
+        const blockDb = new BlockDb();
+        await blockDb.create({
+            blockHash: fakeBlockHash,
+            chainId: position.chainId,
+            blockNumber: position.blockNumber ? position.blockNumber : fakeBlockNumber,
+            finality: Finality.FINAL,
+            blockTimestamp: BigInt(new Date().getDate())
+        });
+    }
 }
 
 export async function createReservation(reservation: any) {
@@ -75,10 +77,12 @@ export async function reservationStateChanged(stateEvent: any) {
 
 export async function createBlock(block: any) {
     const blockDb = new BlockDb();
+
+    const bn = block.blockNumber// ? block.blockNumber : fakeBlockNumber
     await blockDb.create({
         blockHash: block.blockHash,
         chainId: block.chainId,
-        blockNumber: block.blockNumber ? block.blockNumber : fakeBlockNumber,
+        blockNumber: bn,
         finality: Finality.FINAL,
         blockTimestamp: BigInt(new Date().getTime())
     });

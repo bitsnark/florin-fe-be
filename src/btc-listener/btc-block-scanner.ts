@@ -30,6 +30,8 @@ export class BtcBlockScanner {
 		for (let blockNumber = blockStart; blockNumber <= blockEnd; blockNumber++) {
 			const blockHash = await this.btcProvider.getBlockHash(blockNumber);
 			const btcBlock = await this.btcProvider.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
+
+			if (!btcBlock) throw new Error(`BTC Block at height ${blockNumber} not found`);
 			if (BigInt(btcBlock.time) > evmLatestTimestamp + BigInt(config.evmTimestampSafetyMarginSec)) return;
 
 			await this.bitcoinTxFinder.scanBlock(blockNumber, blockHash);
