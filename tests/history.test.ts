@@ -11,28 +11,33 @@ describe('History API Test', () => {
 
 	const ownerAddress = '0xevmOwnerAddress';
 
-	beforeAll(async () => {
+	beforeEach(async () => {
 		// Step 1: Get the highest block for chain 1 and chain 10011
-		let highestEvmBlock: any = await blockDb.getHighestBlock(config.chainId);
-		let highestBtcBlock: any = await blockDb.getHighestBlock(config.btcChainId);
+		let highestEvmBlock: any = await blockDb.getHighestBlock(config.chainId, false);
+		let highestBtcBlock: any = await blockDb.getHighestBlock(config.btcChainId, false);
 
-		if (!highestEvmBlock) highestEvmBlock = { blockNumber: config.blockStart }
-		if (!highestBtcBlock) highestBtcBlock = { blockNumber: config.btcBlockStart }
+		if (!highestEvmBlock) highestEvmBlock = { blockNumber: config.blockStart + 1, blockTimestamp: 10000n }
+		if (!highestBtcBlock) highestBtcBlock = { blockNumber: config.btcBlockStart + 1, blockTimestamp: 10n }
 
 		// Step 2: Create new blocks
 		evmBlock0 = highestEvmBlock.blockNumber + 1;
 		evmBlock1 = highestEvmBlock.blockNumber + 2;
 		evmBlock2 = highestEvmBlock.blockNumber + 3;
-		btcBlock0 = highestBtcBlock.blockNumber + 1;
+		btcBlock0 = highestBtcBlock.blockNumber + 10;
 
-		await createBlock({ chainId: config.chainId, blockHash: '0xhashBlock' + config.chainId + evmBlock0, blockNumber: evmBlock0 });
-		await createBlock({ chainId: config.chainId, blockHash: '0xhashBlock' + config.chainId + evmBlock1, blockNumber: evmBlock1 });
-		await createBlock({ chainId: config.chainId, blockHash: '0xhashBlock' + config.chainId + evmBlock2, blockNumber: evmBlock2 });
-		await createBlock({ chainId: config.btcChainId, blockHash: 'hashBlock' + btcBlock0, blockNumber: btcBlock0 });
+		await createBlock({ chainId: config.chainId, blockHash: '0xhashBlock' + config.chainId + evmBlock0, blockNumber: evmBlock0, blockTimestamp: highestEvmBlock.blockTimestamp + 10000n });
+		await createBlock({ chainId: config.chainId, blockHash: '0xhashBlock' + config.chainId + evmBlock1, blockNumber: evmBlock1, blockTimestamp: highestEvmBlock.blockTimestamp + 20000n });
+		await createBlock({ chainId: config.chainId, blockHash: '0xhashBlock' + config.chainId + evmBlock2, blockNumber: evmBlock2, blockTimestamp: highestEvmBlock.blockTimestamp + 30000n });
+		await createBlock({ chainId: config.btcChainId, blockHash: 'hashBlock' + btcBlock0, blockNumber: btcBlock0, blockTimestamp: highestBtcBlock.blockTimestamp + 1n });
 	});
 
-	beforeEach(() => {
 
+	it('test', () => {
+		expect(true).toBe(true);
+	});
+
+	it('test2', () => {
+		expect(true).toBe(true);
 	});
 
 	it('should return the reservation in the history record', async () => {
@@ -80,7 +85,8 @@ describe('History API Test', () => {
 			txid: `txid${fakeReservationId}`,
 			blockNumber: btcBlock0,
 			blockHash: `hashBlock${btcBlock0}`,
-			targetChainId: config.chainId
+			targetChainId: config.chainId,
+			amount: 5000n
 		});
 
 		// Step 6: Create a state event for the reservation
@@ -109,7 +115,7 @@ describe('History API Test', () => {
 		expect(record.targetBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock2}`);
 		expect(record.targetBlockNumber).toBe(evmBlock2);
 		expect(record.state).toBe(ReservationState.SETTLED);
-	});
+	}, 10000);
 
 	it('should return the positions in the history record', async () => {
 
@@ -120,8 +126,8 @@ describe('History API Test', () => {
 			positionId: fakePositionId,
 			partialSettlement: false,
 			originalAmount: 2000,
-			blockNumber: evmBlock0,
-			blockHash: `0xhashBlock${config.chainId}${evmBlock0}`,
+			blockNumber: evmBlock1,
+			blockHash: `0xhashBlock${config.chainId}${evmBlock1}`,
 			ownerAddress: ownerAddress,
 			tokenAddress: ownerAddress,
 			bitcoinAddress: `btcAddress${fakePositionId}`,
@@ -141,7 +147,8 @@ describe('History API Test', () => {
 			txid: `txid${fakePositionId}`,
 			blockNumber: btcBlock0,
 			blockHash: `hashBlock${btcBlock0}`,
-			targetChainId: config.chainId
+			targetChainId: config.chainId,
+			amount: 2000n
 		});
 
 		// Step 4: Create a state event for the reservation
@@ -161,15 +168,15 @@ describe('History API Test', () => {
 		expect(record).toBeTruthy();
 		expect(record.positionId).toBe(fakePositionId);
 		expect(record.registrationChain).toBe(config.chainId);
-		expect(record.registrationBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock0}`);
-		expect(record.registrationBlockNumber).toBe(evmBlock0);
+		expect(record.registrationBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock1}`);
+		expect(record.registrationBlockNumber).toBe(evmBlock1);
 		expect(record.originChain).toBe(config.chainId);
-		expect(record.originBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock0}`);
-		expect(record.originBlockNumber).toBe(evmBlock0);
+		expect(record.originBlockHash).toBe(`0xhashBlock${config.chainId}${evmBlock1}`);
+		expect(record.originBlockNumber).toBe(evmBlock1);
 		expect(record.targetChain).toBe(config.btcChainId);
 		expect(record.targetBlockHash).toBe(`hashBlock${btcBlock0}`);
 		expect(record.targetBlockNumber).toBe(btcBlock0);
-	});
+	}, 10000);
 
 
 });

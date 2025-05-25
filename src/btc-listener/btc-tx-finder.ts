@@ -40,6 +40,9 @@ export class BitcoinTxFinder {
 
 	async getPendingReservations(): Promise<PendingMaps> {
 		const pending = await this.eventsDb.getUnfulfilledReservations();
+		if (!pending || pending.length === 0)
+			throw new Error('No pending reservations found')
+
 		const byInscription: Map<string, OpenReservation> = new Map();
 		const byAddress: Map<string, OpenReservation> = new Map();
 
@@ -79,7 +82,7 @@ export class BitcoinTxFinder {
 		let inscription = '';
 		const inscriptionIndex = out.findIndex(
 			(v: any) => {
-				inscription = '0x' + v.scriptPubKey.hex!.slice(4);
+				inscription = '0x' + v.scriptPubKey?.hex?.slice(4);
 				return reservations.byInscription.has(inscription)
 			}
 		);
@@ -88,17 +91,23 @@ export class BitcoinTxFinder {
 		const addressIndex = out.findIndex(v =>
 			reservations.byAddress.has(v.scriptPubKey.address));
 
-		// if transaction is found by address return it
-		if (addressIndex !== notFound)
+		// if transaction is found by address & and amount is right - return it
+		if (addressIndex !== notFound &&
+			reservations.byAddress.get(out[addressIndex].scriptPubKey.address).amount ===
+			btcToSatoshi(out[addressIndex].value))
 			return {
 				voutIndex: addressIndex,
 				...reservations.byAddress.get(out[addressIndex].scriptPubKey.address)
 			}
 
+
 		if (inscriptionIndex !== notFound) {
-			//make sure inscription based transaction sends to the right address
+			//make sure inscription based transaction sends to the right address with the right amount
 			const r = reservations.byInscription.get(inscription)
-			const voutIndex = out.findIndex(v => v.scriptPubKey.address === r.bitcoinAddress);
+			const voutIndex = out.findIndex(v =>
+				v.scriptPubKey.address === r.bitcoinAddress &&
+				btcToSatoshi(v.value) === r.amount);
+
 			if (voutIndex !== notFound)
 				return {
 					voutIndex,

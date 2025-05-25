@@ -11,7 +11,7 @@ export interface Block {
     chainId: number;
     blockNumber: number;
     finality: Finality;
-    blockTimestamp: string;
+    blockTimestamp: bigint;
 }
 
 
@@ -97,3 +97,12 @@ export interface Reservation extends ReservationCreatedEvent, ReservationStateEv
 }
 
 export const notFound = -1
+
+
+export enum AddressType {
+    P2TR = 0, // Taproot (SegWit v1)
+    P2WSH = 1,
+    P2WPKH = 2, // SegWit v0
+    P2PKH = 3,     // Legacy not supported yet
+    P2SH = 4 // not supported yet
+}

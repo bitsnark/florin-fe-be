@@ -1,6 +1,6 @@
-import { convertBytes32ToP2TRAddress } from '../common/bech32';
+import { decodeBytes32ToBitcoinAddress } from '../common/encode-decode';
 import { config } from '../common/config';
-import { Reservation, ReservationState } from '../common/types';
+import { AddressType, Reservation, ReservationState } from '../common/types';
 import { HistoryRecord, mapRowsToHistoryRecords, MaterializedHistory } from './materialized-history';
 
 function rowToReservation(row: any): Reservation {
@@ -107,7 +107,9 @@ export class MaterializedReservation extends MaterializedHistory {
         const result = await this.query(query, [config.chainId]);
         return result.rows.map(row => ({
             reservationId: row.reservation_id,
-            bitcoinAddress: convertBytes32ToP2TRAddress(row.bitcoin_address),
+            bitcoinAddress: decodeBytes32ToBitcoinAddress(
+                row.bitcoin_address,
+                row.is_inscription ? AddressType.P2WPKH : AddressType.P2TR),
             amount: row.amount,
             isInscription: row.is_inscription,
             txid: row.txid,

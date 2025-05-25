@@ -82,14 +82,15 @@ describe("BlockScanner", () => {
 
     describe("processNewBlocks", () => {
         it("should process new blocks and save them to the database", async () => {
-            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL, blockTimestamp: '1234567890' };
+            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.FINAL, blockTimestamp: 1234567890n };
             const currentBlockNumber = 10;
-            const evmBlock = { hash: "0xabc", timestamp: 212312313 };
+            const evmBlock = { hash: "0xabc", timestamp: 1234577890n };
 
             blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);
             provider.getBlockNumber.mockResolvedValue(currentBlockNumber);
             provider.getBlockByHeight.mockResolvedValue(evmBlock as any);
             provider.getParsedLogs.mockResolvedValue([]);
+            config.finalityBlocks = 0;
 
             await blockScanner.processNewBlocks();
 
@@ -97,18 +98,19 @@ describe("BlockScanner", () => {
             expect(provider.getBlockNumber).toHaveBeenCalled();
             for (let blockNumber = 6; blockNumber <= currentBlockNumber; blockNumber++) {
                 expect(provider.getBlockByHeight).toHaveBeenCalledWith(blockNumber);
-                expect(blockDb.create).toHaveBeenCalledWith({
+                console.log(blockNumber - 5);
+                expect(blockDb.create).toHaveBeenNthCalledWith(blockNumber - 5, {
                     blockHash: evmBlock.hash,
                     chainId: config.chainId,
                     blockNumber,
-                    finality: Finality.UNKNOWN,
-                    timestamp: evmBlock.timestamp.toString()
+                    finality: blockNumber === currentBlockNumber ? Finality.UNKNOWN : Finality.FINAL,
+                    blockTimestamp: 1234577890n
                 });
             }
         });
 
         it("should throw an error if a block is not found", async () => {
-            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN, blockTimestamp: '1234567890' };
+            const highestFinalBlock = { blockNumber: 5, blockHash: "0x123", chainId: 2002, finality: Finality.UNKNOWN, blockTimestamp: 1234567890n };
             const currentBlockNumber = 10;
 
             blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);

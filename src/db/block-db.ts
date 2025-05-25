@@ -12,8 +12,11 @@ export interface IBlockDb {
 export class BlockDb extends Db implements IBlockDb {
 
   async create(block: Block): Promise<void> {
-    // Revert blocks with the same height
-    const update = `UPDATE blocks SET finality = 'REVERTED' WHERE chain_id = $1 and block_number = $2`;
+    // Set all other blocks of te same height as reverted
+    const update = `UPDATE blocks SET finality = 'REVERTED'
+      WHERE chain_id = $1
+      AND block_number = $2
+      AND block_hash <> $3`;
 
     // Insert new or update returning canonical with updated timestamp and state
     const insert = `
@@ -25,10 +28,11 @@ export class BlockDb extends Db implements IBlockDb {
           block_number = $3,
           finality = $4,
           block_timestamp = $5`;
+
     await this.runTransaction([
       {
         sql: update,
-        args: [block.chainId, block.blockNumber]
+        args: [block.chainId, block.blockNumber, block.blockHash]
       },
       {
         sql: insert,

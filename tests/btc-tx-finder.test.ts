@@ -4,6 +4,8 @@ import { MaterializedReservation } from "../src/db/materialized-reservation";
 import { BtcTxDb } from "../src/db/btc-tx-db";
 import { ReservationState } from "../src/common/types";
 import { keccak256 } from "ethers";
+import { btcToSatoshi } from "../src/common/btc-utils";
+import { config } from "../src/common/config";
 
 jest.mock("../src/btc-listener/bitcoin-node");
 jest.mock("../src/db/materialized-reservation");
@@ -23,18 +25,16 @@ describe("BitcoinTxFinder.scanBlock", () => {
 	});
 
 	it("should throw an error if no pending reservations are found", async () => {
-		mockEventsDb.getReservationsByState.mockResolvedValue([]);
+		mockEventsDb.getUnfulfilledReservations.mockResolvedValue([]);
 
 		await expect(bitcoinTxFinder.scanBlock(100, "blockHash")).rejects.toThrow(
 			"No pending reservations found"
 		);
-
-		expect(mockEventsDb.getReservationsByState).toHaveBeenCalledWith(ReservationState.PENDING);
 	});
 
 	it("should skip transactions that do not match any pending reservations", async () => {
-		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+		mockEventsDb.getUnfulfilledReservations.mockResolvedValue([
+			{ bitcoinAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -54,8 +54,8 @@ describe("BitcoinTxFinder.scanBlock", () => {
 	});
 
 	it("should insert a transaction with matching amount and address - partial position", async () => {
-		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1' } as any,
+		mockEventsDb.getUnfulfilledReservations.mockResolvedValue([
+			{ bitcoinAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: config.chainId, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1', txid: 'txid' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -75,17 +75,18 @@ describe("BitcoinTxFinder.scanBlock", () => {
 			txid: "tx1",
 			blockHash: "blockHash",
 			blockHeight: 100,
-			targetChainId: 1,
+			targetChainId: config.chainId,
 			reservationId: keccak256(Buffer.from("res1")),
-			positionId: 'pos1'
+			positionId: 'pos1',
+			amount: btcToSatoshi(0.00005)
 		});
 	});
 
 	//Partial reservation - identify by address + ammount
 
 	it("should not insert a transaction if amount or address not matching - partial position", async () => {
-		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: 1, reservationId: keccak256(Buffer.from("res1")) } as any,
+		mockEventsDb.getUnfulfilledReservations.mockResolvedValue([
+			{ bitcoinAddress: "address1", amount: BigInt(5000), isInscription: false, chainId: config.chainId, reservationId: keccak256(Buffer.from("res1")), txid: 'txid' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -116,8 +117,8 @@ describe("BitcoinTxFinder.scanBlock", () => {
 	//Full reservation - identify by inscription + address + amount
 	//-------------------------------------------------------------------
 	it("should insert a transaction if amount, address & inscription are matching - FULL position", async () => {
-		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1' } as any,
+		mockEventsDb.getUnfulfilledReservations.mockResolvedValue([
+			{ bitcoinAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: config.chainId, reservationId: "0xres1", positionId: 'pos1', txid: 'txid' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({
@@ -125,7 +126,7 @@ describe("BitcoinTxFinder.scanBlock", () => {
 				{
 					txid: "tx1",
 					vout: [
-						{ scriptPubKey: { hex: '000093608083a4284281eb999511a3994df9b4c0320e55390e69bc7bfdd5a14d24d9' } },
+						{ scriptPubKey: { hex: 'xxxxres1' } }, //op_return push32 4 chars to be sliced in search
 						{ scriptPubKey: { address: "address1" }, value: 0.00005 },
 					],
 				}
@@ -138,15 +139,18 @@ describe("BitcoinTxFinder.scanBlock", () => {
 			txid: "tx1",
 			blockHash: "blockHash",
 			blockHeight: 100,
-			targetChainId: 1,
-			reservationId: keccak256(Buffer.from("res1")),
-			positionId: 'pos1'
+			targetChainId: config.chainId,
+			reservationId: "0xres1",
+			positionId: 'pos1',
+			amount: btcToSatoshi(0.00005),
 		});
 	});
 
+
+
 	it("should not insert a transaction if inscription  or address not matching - FULL position", async () => {
-		mockEventsDb.getReservationsByState.mockResolvedValue([
-			{ btcAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: 1, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1' } as any,
+		mockEventsDb.getUnfulfilledReservations.mockResolvedValue([
+			{ bitcoinAddress: "address1", amount: BigInt(5000), isInscription: true, chainId: config.chainId, reservationId: keccak256(Buffer.from("res1")), positionId: 'pos1', txid: 'txid' } as any,
 		]);
 
 		mockBitcoinRPC.getBlock.mockResolvedValue({

@@ -49,7 +49,7 @@ export class BlockScanner {
                 chainId: config.chainId,
                 blockNumber,
                 finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
-                blockTimestamp: evmBlock.timestamp.toString()
+                blockTimestamp: BigInt(evmBlock.timestamp)
             });
         }
 

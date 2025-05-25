@@ -5,6 +5,7 @@ import { sleep } from "../common/sleep";
 import { BitcoinTxFinder } from "./btc-tx-finder";
 import { BitcoinNode } from "./bitcoin-node";
 import { BlockVerbosity } from "../common/bitcoin-core-types";
+import { throttle } from "../common/throttle";
 
 export class BtcBlockScanner {
 
@@ -24,13 +25,14 @@ export class BtcBlockScanner {
 		if (highest) blockStart = highest.blockNumber + 1;
 		const blockEnd = await this.btcProvider.getBlockCount();
 		const firstUnknown = blockEnd - config.btcFinalityBlocks;
+		const evmLatestTimestamp = await this.getEvmLatestBlockTimestamp();
 
 		for (let blockNumber = blockStart; blockNumber <= blockEnd; blockNumber++) {
 			const blockHash = await this.btcProvider.getBlockHash(blockNumber);
 			const btcBlock = await this.btcProvider.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
-			if (!btcBlock) {
-				throw new Error(`BTC Block at height ${blockNumber} not found`);
-			}
+
+			if (!btcBlock) throw new Error(`BTC Block at height ${blockNumber} not found`);
+			if (BigInt(btcBlock.time) > evmLatestTimestamp + BigInt(config.evmTimestampSafetyMarginSec)) return;
 
 			await this.bitcoinTxFinder.scanBlock(blockNumber, blockHash);
 
@@ -39,9 +41,17 @@ export class BtcBlockScanner {
 				chainId: config.btcChainId,
 				blockNumber,
 				finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
-				blockTimestamp: btcBlock.time.toString()
+				blockTimestamp: BigInt(btcBlock.time)
 			});
 		}
+	}
+
+	private async getEvmLatestBlockTimestamp(): Promise<bigint> {
+		// get the latest chain block timestamp from the database
+		const evmLatestTimestamp = await this.blockDb.getHighestBlock(config.chainId);
+		if (evmLatestTimestamp) return evmLatestTimestamp.blockTimestamp;
+		// if the database has no evm blocks, do not start the btc scanner
+		return 0n;
 	}
 
 	async finalizeBlocks() {
