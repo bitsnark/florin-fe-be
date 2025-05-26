@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { config } from "../common/config";
 import { EventsDb } from "../db/events-db";
+import { logger } from "../common/logger";
 
 export interface IEventWriter {
     parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription): Promise<void>;
@@ -78,19 +79,19 @@ export class EventWriter implements IEventWriter {
         switch (parsedLog.name) {
             case 'PositionCreated':
                 this.positionCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: PositionCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                logger.info(`parseEvent: PositionCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'PositionStatusChanged':
                 this.positionStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: PositionStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                logger.info(`parseEvent: PositionStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationCreated':
                 this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: ReservationCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                logger.info(`parseEvent: ReservationCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationStatusChanged':
                 this.reservationStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
-                console.log(`parseEvent: ReservationStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                logger.info(`parseEvent: ReservationStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
         }
     }

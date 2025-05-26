@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 type ParsedValue = string | number | bigint | boolean;
 type ParsingFunction = (value: string, defaultValue?: ParsedValue) => ParsedValue;
 
@@ -13,6 +15,7 @@ function parseEnv(name: string, parser: ParsingFunction, defaultValue?: ParsedVa
         return parser(value);
     } catch (e) {
         const error = e as Error;
+        logger.error(`Error parsing environment variable '${name}': ${error.message}`);
         throw new Error(`${error.message} for environment variable: '${name}'`);
     }
 }

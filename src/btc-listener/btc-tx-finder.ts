@@ -5,6 +5,7 @@ import { MaterializedReservation, OpenReservation } from "../db/materialized-res
 import { BtcTxDb } from "../db/btc-tx-db";
 import { btcToSatoshi } from "../common/btc-utils";
 import { config } from "../common/config";
+import { logger } from "../common/logger";
 
 
 export interface UnfulfilledReservation {
@@ -56,12 +57,15 @@ export class BitcoinTxFinder {
 
 	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
 		const reservations = await this.getPendingReservations();
+		logger.info(`BitcoinTxFinder scanBlock: ${blockHeight} byInscription:${reservations.byInscription.size} byAddress:${reservations.byAddress.size} address reservations for `);
 
 		const block = await this.bitcoinRPC.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
 
 		for (const tx of block.tx) {
 			const res = this.findTxReservation(tx.vout, reservations)
 			if (!res) continue;
+
+			logger.info(`Found reservation payment transaction for reservationId: ${res.reservationId} txid: ${tx.txid} blockHeight${blockHeight}`);
 
 			await this.btcDB.insertTx({
 				txid: tx.txid,

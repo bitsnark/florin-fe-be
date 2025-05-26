@@ -1,6 +1,7 @@
 import Client from 'bitcoin-core';
 import { config } from '../common/config';
 import { Block, BlockVerbosity } from '../common/bitcoin-core-types';
+import { logger } from '../common/logger';
 export class BitcoinNode {
     public client;
 
@@ -10,7 +11,7 @@ export class BitcoinNode {
             password: config.btcNodePassword,
             host: config.btcNodeHost
         });
-        console.log('client connect:', this.client.host);
+        logger.info('client connect:', this.client.host);
     }
 
     async getBlockCount(): Promise<number> {
