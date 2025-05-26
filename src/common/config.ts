@@ -32,7 +32,7 @@ export interface IConfig {
     providerUrl: string;
     chainId: number;
     contractAddress: string;
-    openPositionInListenerUrl: string;
+
     evmTimestampSafetyMarginSec: number;
     finalityBlocks: number;
     loopIntervalMs: number;
@@ -64,8 +64,8 @@ export const config: IConfig = {
     providerUrl: parse.string('PROVIDER_URL', 'http://localhost:8545'),
     chainId: parse.integer('CHAIN_ID', 31337),
     btcAddressPrefixes: parse.string('BTC_ADDRESS_PREFIXES', 'TESTNET'),
-    contractAddress: parse.string('CONTRACT_ADDRESS', '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'),
-    openPositionInListenerUrl: parse.string('OPEN_POSITION_IN_LISTENER_URL', 'http://localhost:3000/open-position'),
+    contractAddress: parse.string('CONTRACT_ADDRESS', '0x0165878A594ca255338adfa4d48449f69242Eb8F'),
+
     finalityBlocks: parse.integer('FINALITY_BLOCKS', 20),
     loopIntervalMs: parse.integer('LOOP_INTERVAL_MS', 1000),
     throttleInterval: parse.integer('THROTTLE_INTERVAL', 300),
@@ -80,5 +80,5 @@ export const config: IConfig = {
 
     evmTimestampSafetyMarginSec: parse.integer('EVM_TIMESTAMP_SAFETY_MARGIN_SEC', 3600),
 
-    httpPort: parse.integer('HTTP_PORT', 800),
+    httpPort: parse.integer('HTTP_PORT', 8080),
 }
