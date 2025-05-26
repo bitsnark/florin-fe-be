@@ -3,6 +3,7 @@ import { AddressType } from './types'
 
 
 import { config, BtcAddressPrefixes } from './config';
+import { logger } from "./logger";
 
 export interface EncodedBtcAddress {
 	EncodedBtcAddress: string;
@@ -46,7 +47,8 @@ export function addressToBytes32(address: string): EncodedBtcAddress {
 			break;
 
 		default:
-			throw new Error(`Unsupported address type: ${addressType}`);
+			logger.error(`Unsupported address type: ${addressType} address:${address}`);
+			throw new Error(`Unsupported address type: ${addressType} address:${address}`);
 	}
 
 	if (program.length > 32) throw new Error('Program too long for bytes32');
@@ -93,6 +95,7 @@ export function decodeBytes32ToBitcoinAddress(
 		}
 
 		default:
+			logger.error(`Unsupported address type: ${addressType} address:${bytes32Address}`);
 			console.log(`Unsupported address type: ${addressType}`);
 			return '';
 	}

@@ -6,6 +6,7 @@ import { BitcoinTxFinder } from "./btc-tx-finder";
 import { BitcoinNode } from "./bitcoin-node";
 import { BlockVerbosity } from "../common/bitcoin-core-types";
 import { throttle } from "../common/throttle";
+import { logger } from "../common/logger";
 
 export class BtcBlockScanner {
 
@@ -72,7 +73,8 @@ export class BtcBlockScanner {
 				if (btcBlock) {
 					block.finality = Finality.FINAL;
 					if (btcBlock.height != block.blockNumber) {
-						throw new Error(`Block in DB has incorrect height: ${block.blockHash}`);
+						logger.error(`Block in DB has incorrect rpcHeight: ${btcBlock.height} dbHeight${block.blockNumber} hash: ${block.blockHash}`);
+						throw new Error(`Block in DB has incorrect rpcHeight: ${btcBlock.height} dbHeight${block.blockNumber} hash: ${block.blockHash}`);
 					}
 				}
 			} catch (error) { continue }
@@ -105,12 +107,12 @@ export class BtcBlockScanner {
 			try {
 				await this.processNewBlocks();
 			} catch (error) {
-				console.log(error);
+				logger.error(`BtcBlockScanner processNewBlocks ${error}`);
 			}
 			try {
 				await this.finalizeBlocks();
 			} catch (error) {
-				console.log(error);
+				logger.error(`BtcBlockScanner finalizeBlocks ${error}`);
 			}
 			await sleep(config.loopIntervalMs);
 		}

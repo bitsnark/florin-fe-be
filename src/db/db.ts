@@ -1,5 +1,6 @@
 import { config } from '../common/config';
 import { connect } from 'ts-postgres';
+import { logger } from '../common/logger';
 
 export type DbValue = string | number | boolean | object | null | undefined | bigint;
 export type QueryArgs = DbValue[];
@@ -51,9 +52,7 @@ export class Db {
             }
             return { rows: objarray };
         } catch (error) {
-            console.error((error as Error).message);
-            console.error('SQL: ', sql);
-            console.error('params: ', params);
+            logger.error(`Database query error: ${(error as Error).message} sql: ${sql} params: ${params}`);
             throw error;
         } finally {
             await client.end();
@@ -67,7 +66,7 @@ export class Db {
             await fn();
             await client.query('COMMIT');
         } catch (e) {
-            console.error(e);
+            logger.error(`Db asTransaction error ${e}`);
             await client.query('ROLLBACK');
         } finally {
             await client.end();
@@ -80,7 +79,6 @@ export class Db {
         try {
             await client.query('BEGIN');
 
-
             for (i; i < queries.length; i++) {
                 await client.query(queries[i].sql, queries[i].args);
             }
@@ -88,8 +86,8 @@ export class Db {
             await client.query('COMMIT');
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error(`Failed to execute query ${i}: `, (error as { message: string }).message ?? '');
-            console.error(queries[i].sql, queries[i].args);
+            logger.error(`Db runTransaction failed to execute query ${i}: `, (error as { message: string }).message ?? '');
+            logger.error(queries[i].sql, queries[i].args);
         } finally {
             await client.end();
         }

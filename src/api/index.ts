@@ -3,6 +3,7 @@ import express from 'express';
 import { setApi } from './api';
 import { config } from '../common/config';
 import cors from 'cors'
+import { logger } from '../common/logger';
 
 export function initServer() {
     // Create an Express application
@@ -15,9 +16,9 @@ export function initServer() {
     // app.use(bodyParser.urlencoded({ extended: true })); // <-- Parse URL-encoded data
 
     app.use((req, res, next) => {
-        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-        console.log("Query Params:", req.query);
-        console.log("Body:", req.body);
+        logger.info(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+        logger.info("Query Params:", req.query);
+        logger.info("Body:", req.body);
         next(); // Pass control to the next middleware or route handler
     });
 
@@ -33,7 +34,7 @@ export function initServer() {
     const port = config.httpPort;
     const host = '0.0.0.0';
     const server = http.createServer(options, app).listen(port, host, () => {
-        console.log(`HTTP server listening on port ${host}:${port}`);
+        logger.info(`HTTP server listening on port ${host}:${port}`);
     });
 }
 

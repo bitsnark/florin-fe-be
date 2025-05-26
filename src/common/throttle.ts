@@ -1,4 +1,5 @@
 import { config } from "./config";
+import { logger } from "./logger";
 
 let lastRequestTime = 0;
 
@@ -31,12 +32,13 @@ export async function throttleWithRetries<T, Args extends unknown[]>(
 		try {
 			return await fn(...args);
 		} catch (e) {
-
+			logger.error(`Throttle attempt ${attempt + 1} failed:`, e);
 			if (attempt === config.retriesOnFail) throw e;
 			await delay(config.throttleInterval);
 		}
 	}
 
 	// This line should never be reached because the loop either returns or throws
+	logger.error('Unexpected error in throttleWithRetries function');
 	throw new Error('Unexpected error in throttle function');
 }

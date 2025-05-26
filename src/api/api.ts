@@ -76,8 +76,8 @@ import { MaterializedReservation } from '../db/materialized-reservation';
 import { MaterializedHistory } from '../db/materialized-history';
 import { Express } from 'express';
 import { jsonStringifyCustom } from '../common/json';
-import { openPosition } from '../position-opener';
 import { BitcoinNode } from '../btc-listener/bitcoin-node';
+import { logger } from '../common/logger';
 
 
 export const indexGreeting = 'This is the Florin API index';
@@ -110,7 +110,7 @@ export function setApi(app: Express) {
                 res.status(404).send('Item not found');
             }
         } catch (error) {
-            console.log(error);
+            logger.error(`GET /position/${id} error:${error}`);
             res.status(500).send('Internal Server Error');
         }
     });
@@ -132,7 +132,7 @@ export function setApi(app: Express) {
                 res.status(404).send('Item not found');
             }
         } catch (error) {
-            console.log(error);
+            logger.error(`GET /reservation/${id} error:${error}`);
             res.status(500).send('Internal Server Error');
         }
     });
@@ -150,7 +150,7 @@ export function setApi(app: Express) {
             const history = await materializedHistory.getOwnerHistory(address.toLowerCase(), finalityFlag)
             if (history) res.send(jsonStringifyCustom(history));
         } catch (e) {
-            console.error(e);
+            logger.error(`GET /history/${address} error:${e}`);
             res.status(500).send('Internal Server Error');
         }
     });
@@ -161,30 +161,7 @@ export function setApi(app: Express) {
             if (blockCount) res.send(jsonStringifyCustom({ blockCount }));
         } catch (e) {
             console.error(e);
-            res.status(500).send('Internal Server Error');
-        }
-    });
-
-
-    app.post('/position', async (req, res) => {
-        try {
-            const { forwardData } = req.body;
-            if (!forwardData) {
-                res.status(400).send('forwardData is required');
-                return;
-            }
-
-            const posId = await openPosition(forwardData);
-
-
-            if (posId) {
-                res.json({ 'positionId': posId });
-            } else {
-                res.status(404).send('Item not found');
-            }
-
-        } catch (e) {
-            console.error(e);
+            logger.error(`GET /btcBlockCount error:${e}`);
             res.status(500).send('Internal Server Error');
         }
     });
