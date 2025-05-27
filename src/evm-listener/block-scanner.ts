@@ -32,11 +32,10 @@ export class BlockScanner {
         const highest = await this.blockDb.getHighestBlock(config.chainId, true);
         if (highest) blockStart = highest.blockNumber + 1;
         const blockEnd = await throttle(this.provider.getBlockNumber.bind(this.provider));
-        logger.info(`fe-be bock-scanner: process New Blocks: highest block in DB: ${highest?.blockNumber} blockStart: ${blockStart} blockEnd: ${blockEnd}`);
 
+        logger.info(`fe-be processNewBlocks of ${config.chainId} blockStart: ${blockStart} blockEnd: ${blockEnd}`);
         const firstUnknown = blockEnd - config.finalityBlocks;
         for (let blockNumber = blockStart; blockNumber <= blockEnd; blockNumber++) {
-            console.log(`fe-be Processing evm block ${blockNumber}...`);
 
             const evmBlock = await throttle(this.provider.getBlockByHeight.bind(this.provider), blockNumber);
             if (!evmBlock) {
