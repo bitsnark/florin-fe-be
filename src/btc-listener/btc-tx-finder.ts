@@ -57,7 +57,7 @@ export class BitcoinTxFinder {
 
 	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
 		const reservations = await this.getPendingReservations();
-		logger.info(`BitcoinTxFinder scanBlock: ${blockHeight} byInscription:${reservations.byInscription.size} byAddress:${reservations.byAddress.size} address reservations for `);
+		logger.info(`BitcoinTxFinder scanBlock: ${blockHeight} byInscription:${reservations.byInscription.size} byAddress:${reservations.byAddress.size} `);
 
 		const block = await this.bitcoinRPC.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
 
