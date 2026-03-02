@@ -8,7 +8,9 @@
     "test": "jest --detectOpenHandles",
     "postgres": "./scripts/postgres.sh",
     "build": "tsc",
-    "start": "ts-node ./src/api/index.ts"
+    "start": "ts-node ./src/api/index.ts",
+    "start:evm-scanner": "ts-node ./src/evm-scanner.ts",
+    "start:btc-scanner": "ts-node ./src/btc-scanner.ts"
   },
   "repository": {
     "type": "git",
