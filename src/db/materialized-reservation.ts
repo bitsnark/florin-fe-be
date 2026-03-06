@@ -1,6 +1,5 @@
-import { decodeBytes32ToBitcoinAddress } from '../common/encode-decode';
 import { config } from '../common/config';
-import { AddressType, Reservation, ReservationState } from '../common/types';
+import { Reservation, ReservationState } from '../common/types';
 import { HistoryRecord, mapRowsToHistoryRecords, MaterializedHistory } from './materialized-history';
 
 function rowToReservation(row: any): Reservation {
@@ -79,6 +78,14 @@ export class MaterializedReservation extends MaterializedHistory {
 
     }
 
+    // Returns the expected scriptPubKey hex for a reservation's bytes32-encoded address.
+    // Used for matching against vout.scriptPubKey.hex in block data (nodes don't always return address fields).
+    private bytes32ToScriptPubKeyHex(bytes32: string, isInscription: boolean): string {
+        const hex = bytes32.startsWith('0x') ? bytes32.slice(2) : bytes32;
+        if (isInscription) return '0014' + hex.slice(24); // P2WPKH: 0014 + 20 bytes
+        return '5120' + hex;                              // P2TR:   5120 + 32 bytes
+    }
+
     async getUnfulfilledReservations(): Promise<OpenReservation[]> {
         const query = `
         SELECT DISTINCT ON (rce.reservation_id)
@@ -107,9 +114,7 @@ export class MaterializedReservation extends MaterializedHistory {
         const result = await this.query(query, [config.chainId]);
         return result.rows.map(row => ({
             reservationId: row.reservation_id,
-            bitcoinAddress: decodeBytes32ToBitcoinAddress(
-                row.bitcoin_address,
-                row.is_inscription ? AddressType.P2WPKH : AddressType.P2TR),
+            bitcoinAddress: this.bytes32ToScriptPubKeyHex(row.bitcoin_address, row.is_inscription),
             amount: row.amount,
             isInscription: row.is_inscription,
             txid: row.txid,

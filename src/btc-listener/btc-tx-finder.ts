@@ -91,17 +91,17 @@ export class BitcoinTxFinder {
 			}
 		);
 
-		// Identify transaction by by address
+		// Identify transaction by address (match on scriptPubKey.hex — nodes don't always return address field)
 		const addressIndex = out.findIndex(v =>
-			reservations.byAddress.has(v.scriptPubKey.address));
+			reservations.byAddress.has(v.scriptPubKey.hex));
 
 		// if transaction is found by address & and amount is right - return it
 		if (addressIndex !== notFound &&
-			reservations.byAddress.get(out[addressIndex].scriptPubKey.address).amount ===
+			reservations.byAddress.get(out[addressIndex].scriptPubKey.hex).amount ===
 			btcToSatoshi(out[addressIndex].value))
 			return {
 				voutIndex: addressIndex,
-				...reservations.byAddress.get(out[addressIndex].scriptPubKey.address)
+				...reservations.byAddress.get(out[addressIndex].scriptPubKey.hex)
 			}
 
 
