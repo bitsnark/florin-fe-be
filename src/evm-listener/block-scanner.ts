@@ -19,42 +19,63 @@ export class BlockScanner {
         this.eventWriter = eventWriter;
     }
 
-    async processEvents(blockNumber: number, blockHash: string) {
-        const parsedLogs = await throttle(this.provider.getParsedLogs.bind(this.provider), blockNumber);
-        for (const log of parsedLogs) {
-            await this.eventWriter.parseEvent(blockNumber, blockHash, log.txhash, log);
-        }
-    }
-
     async processNewBlocks() {
 
         let blockStart = config.blockStart;
         const highest = await this.blockDb.getHighestBlock(config.chainId, true);
         if (highest) blockStart = highest.blockNumber + 1;
-        const blockEnd = await throttle(this.provider.getBlockNumber.bind(this.provider));
+        // Subtract 2 to avoid "Unknown block" errors from RPC nodes not yet indexing the latest block
+        const blockEnd = (await throttle(this.provider.getBlockNumber.bind(this.provider))) - 2;
 
         logger.info(`fe-be processNewBlocks of ${config.chainId} blockStart: ${blockStart} blockEnd: ${blockEnd}`);
         const firstUnknown = blockEnd - config.finalityBlocks;
-        for (let blockNumber = blockStart; blockNumber <= blockEnd; blockNumber++) {
+        const SCAN_BATCH_SIZE = 500;
 
-            const evmBlock = await throttle(this.provider.getBlockByHeight.bind(this.provider), blockNumber);
-            if (!evmBlock) {
-                logger.error(`fe-be Block at height ${blockNumber} not found`);
-                throw new Error(`fe-be Block at height ${blockNumber} not found`);
+        for (let batchStart = blockStart; batchStart <= blockEnd; batchStart += SCAN_BATCH_SIZE) {
+            const batchEnd = Math.min(batchStart + SCAN_BATCH_SIZE - 1, blockEnd);
+
+            const logs = await throttle(this.provider.getParsedLogsInRange.bind(this.provider), batchStart, batchEnd);
+
+            const logsByBlock = new Map<number, typeof logs>();
+            for (const log of logs) {
+                if (!logsByBlock.has(log.blockNumber)) logsByBlock.set(log.blockNumber, []);
+                logsByBlock.get(log.blockNumber)!.push(log);
             }
 
-            await this.processEvents(blockNumber, evmBlock.hash);
+            for (const [blockNumber, blockLogs] of logsByBlock) {
+                const evmBlock = await throttle(this.provider.getBlockByHeight.bind(this.provider), blockNumber);
+                if (!evmBlock) {
+                    logger.error(`fe-be Block at height ${blockNumber} not found`);
+                    throw new Error(`fe-be Block at height ${blockNumber} not found`);
+                }
+                for (const log of blockLogs) {
+                    await this.eventWriter.parseEvent(blockNumber, evmBlock.hash, log.txhash, log);
+                }
+                await this.blockDb.create({
+                    blockHash: evmBlock.hash,
+                    chainId: config.chainId,
+                    blockNumber,
+                    finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
+                    blockTimestamp: BigInt(evmBlock.timestamp)
+                });
+            }
 
-            await this.blockDb.create({
-                blockHash: evmBlock.hash,
-                chainId: config.chainId,
-                blockNumber,
-                finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
-                blockTimestamp: BigInt(evmBlock.timestamp)
-            });
+            // Store batch-end block as progress marker if not already stored as an event block
+            if (!logsByBlock.has(batchEnd)) {
+                const evmBlock = await throttle(this.provider.getBlockByHeight.bind(this.provider), batchEnd);
+                if (!evmBlock) {
+                    logger.error(`fe-be Block at height ${batchEnd} not found`);
+                    throw new Error(`fe-be Block at height ${batchEnd} not found`);
+                }
+                await this.blockDb.create({
+                    blockHash: evmBlock.hash,
+                    chainId: config.chainId,
+                    blockNumber: batchEnd,
+                    finality: batchEnd < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
+                    blockTimestamp: BigInt(evmBlock.timestamp)
+                });
+            }
         }
-
-
     }
 
     async finalizeBlocks() {

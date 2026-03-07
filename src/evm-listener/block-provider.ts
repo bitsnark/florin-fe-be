@@ -4,13 +4,15 @@ import { exchangeAbi } from "../abis/exchange";
 
 export interface LogDescriptionWithTxhash extends ethers.LogDescription {
     txhash: string;
+    blockNumber: number;
+    blockHash: string;
 }
 
 export interface IBlockProvider {
     getBlockNumber(): Promise<number>;
     getBlockByHeight(height: number): Promise<ethers.Block>;
     getBlockByHash(hash: string): Promise<ethers.Block>;
-    getParsedLogs(blockNumber: number): Promise<LogDescriptionWithTxhash[]>;
+    getParsedLogsInRange(fromBlock: number, toBlock: number): Promise<LogDescriptionWithTxhash[]>;
 }
 
 export class BlockProvider implements IBlockProvider {
@@ -35,16 +37,18 @@ export class BlockProvider implements IBlockProvider {
         return this.provider.getBlock(hash);
     }
 
-    async getParsedLogs(blockNumber: number): Promise<LogDescriptionWithTxhash[]> {
+    async getParsedLogsInRange(fromBlock: number, toBlock: number): Promise<LogDescriptionWithTxhash[]> {
         const filter: Filter = {
-            fromBlock: blockNumber,
-            toBlock: blockNumber,
+            fromBlock,
+            toBlock,
             address: config.contractAddress,
         };
         const logs = await this.provider.getLogs(filter);
         return logs.map(l => ({
             ...this.contractInterface.parseLog(l),
-            txhash: l.transactionHash
+            txhash: l.transactionHash,
+            blockNumber: l.blockNumber,
+            blockHash: l.blockHash
         }));
     }
 }
