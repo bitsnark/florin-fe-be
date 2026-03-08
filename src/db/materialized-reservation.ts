@@ -108,7 +108,7 @@ export class MaterializedReservation extends MaterializedHistory {
         where bt.block_hash = bb.block_hash) as btc
 		ON rce.reservation_id = btc.reservation_id
         WHERE br.chain_id =$1
-        AND btc_finality <> 'REVERTED' OR btc_finality IS NULL
+        AND (btc_finality IS NULL OR btc_finality = 'REVERTED')
 	    AND br.finality <> 'REVERTED'
         ORDER BY rce.reservation_id DESC;`
         const result = await this.query(query, [config.chainId]);
