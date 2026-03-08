@@ -1,6 +1,6 @@
 # Scope
 
-Only make changes to the `florin-fe-be` repository. Never modify any other repository.
+**IMPORTANT**: You are only responsible for the `florin-fe-be` repository. Never read, modify, or interact with any other repository under any circumstances.
 
 ## GCP Instance
 
