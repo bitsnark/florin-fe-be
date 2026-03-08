@@ -1,4 +1,8 @@
-# GCP Instance
+# Scope
+
+Only make changes to the `florin-fe-be` repository. Never modify any other repository.
+
+## GCP Instance
 
 SSH access:
 ```
