@@ -78,19 +78,19 @@ export class EventWriter implements IEventWriter {
     public async parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription) {
         switch (parsedLog.name) {
             case 'PositionCreated':
-                this.positionCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                await this.positionCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 logger.info(`parseEvent: PositionCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'PositionStatusChanged':
-                this.positionStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                await this.positionStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 logger.info(`parseEvent: PositionStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationCreated':
-                this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                await this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 logger.info(`parseEvent: ReservationCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationStatusChanged':
-                this.reservationStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                await this.reservationStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 logger.info(`parseEvent: ReservationStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
         }
