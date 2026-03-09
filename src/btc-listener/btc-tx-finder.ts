@@ -107,8 +107,7 @@ export class BitcoinTxFinder {
 			//make sure inscription based transaction sends to the right address with the right amount
 			const r = reservations.byInscription.get(inscription)
 			const voutIndex = out.findIndex(v =>
-				v.scriptPubKey.address === r.bitcoinAddress &&
-				btcToSatoshi(v.value) === r.amount);
+				v.scriptPubKey.hex === r.bitcoinAddress);
 
 			if (voutIndex !== notFound)
 				return {

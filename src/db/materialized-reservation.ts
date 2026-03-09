@@ -82,7 +82,6 @@ export class MaterializedReservation extends MaterializedHistory {
     // Used for matching against vout.scriptPubKey.hex in block data (nodes don't always return address fields).
     private bytes32ToScriptPubKeyHex(bytes32: string, isInscription: boolean): string {
         const hex = bytes32.startsWith('0x') ? bytes32.slice(2) : bytes32;
-        if (isInscription) return '0014' + hex.slice(24); // P2WPKH: 0014 + 20 bytes
         return '5120' + hex;                              // P2TR:   5120 + 32 bytes
     }
 
