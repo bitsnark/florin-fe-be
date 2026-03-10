@@ -65,10 +65,14 @@ export class MaterializedHistory extends Db {
         const positions = await this.getOwnerFullPositions(address, finalityFlag, limit);
         if (positions.length < 1) return [];
 
-        const btcTxs = await this.getBtcTxsByPositions(positions, finalityFlag);
+        const [btcTxs, positionStates] = await Promise.all([
+            this.getBtcTxsByPositions(positions, finalityFlag),
+            this.getPositionLastStatus(positions, finalityFlag),
+        ]);
 
         const result: HistoryRecord[] = positions.map(p => {
             const btcTx = btcTxs.find(b => b.positionId === p.positionId);
+            const posState = positionStates.find(s => s.positionId === p.positionId);
             return {
                 ...p,
                 originChain: p.registrationChain,
@@ -77,11 +81,27 @@ export class MaterializedHistory extends Db {
                 originBlockHash: p.registrationBlockHash,
                 originFinality: p.registrationFinality,
                 originAmount: p.amount,
-                ...btcTx
+                ...btcTx,
+                state: posState?.state,
             }
         })
 
         return result;
+    }
+
+    protected async getPositionLastStatus(positions: HistoryRecord[], finalityFlag?: boolean): Promise<HistoryRecord[]> {
+        const query = `
+        SELECT DISTINCT ON (ps.position_id)
+            ps.position_id, ps.state
+        FROM position_state_events ps, blocks b
+        WHERE ps.block_hash = b.block_hash
+            AND ps.position_id = ANY($1)
+            AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+        ORDER BY ps.position_id, ps.event_id DESC
+        `;
+        const result = await this.query(query, [positions.map(p => p.positionId)]);
+        if (result.rows.length < 1) return [];
+        return mapRowsToHistoryRecords(result.rows);
     }
 
 
