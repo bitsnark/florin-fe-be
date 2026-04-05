@@ -151,19 +151,26 @@ export class MaterializedReservation extends MaterializedHistory {
     }
 
     protected async getLiteforgeBridgeEvent(reservations: HistoryRecord[], finalityFlag: boolean): Promise<HistoryRecord[]> {
+        // For Liteforge reservations, ownerAddress is LiteforgeDepositor — the real
+        // recipient is stored in liteforge_reserved_events. Use COALESCE to prefer
+        // that over ownerAddress so regular reservations still work.
         const query = `
-            SELECT
-                lb.txhash as liteforge_txhash
+            SELECT lb.txhash as liteforge_txhash
             FROM liteforge_bridge_events lb
             JOIN blocks b ON lb.block_hash = b.block_hash
-            WHERE lower(lb.l2_recipient) = ANY($1)
-                AND lb.block_number > $2
-                AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+            WHERE lower(lb.l2_recipient) = ANY(
+                SELECT COALESCE(lower(lre.l2_recipient), lower(rc.owner_address))
+                FROM reservation_created_events rc
+                LEFT JOIN liteforge_reserved_events lre ON lre.reservation_id = rc.reservation_id
+                WHERE rc.reservation_id = ANY($1)
+            )
+            AND lb.block_number > $2
+            AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
             LIMIT 1
         `;
-        const ownerAddresses = reservations.map(r => r.ownerAddress?.toLowerCase());
+        const reservationIds = reservations.map(r => r.reservationId);
         const registrationBlockNumber = Number(reservations[0]?.registrationBlockNumber ?? 0);
-        const result = await this.query(query, [ownerAddresses, registrationBlockNumber]);
+        const result = await this.query(query, [reservationIds, registrationBlockNumber]);
         if (result.rows.length < 1) return [];
         return mapRowsToHistoryRecords(result.rows);
     }

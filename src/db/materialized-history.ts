@@ -38,7 +38,7 @@ export function mapRowsToHistoryRecords(rows: any[]): HistoryRecord[] {
     return rows.map((row) => {
         const mappedRow: any = {};
         for (const key in row) {
-            if (Object.prototype.hasOwnProperty.call(row, key)) {
+            if (Object.prototype.hasOwnProperty.call(row, key) && row[key] !== null) {
                 // Convert '_x' to 'X'
                 const convertedKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
                 mappedRow[convertedKey] = row[key];
