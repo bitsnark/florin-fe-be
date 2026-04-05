@@ -58,7 +58,7 @@ const LTC_TESTNET: bitcoin.networks.Network = {
 
 const FEE_SATS      = 10_000;  // 0.0001 LTC tx fee
 const PAYMENT_SATS  = 20_000;  // 0.0002 LTC to send to the reservation address
-const TOKEN_AMOUNT  = 100_000n; // arbitrary tokenAmount arg to reservePosition
+const TOKEN_AMOUNT  = BigInt(PAYMENT_SATS) * 10n**10n; // sats × 10^10 = EVM token units
 
 // Timeouts / polling
 const POLL_MS       = 30_000;  // 30 s between polls
