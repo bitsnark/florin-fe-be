@@ -146,8 +146,8 @@ CREATE INDEX idx_bitcoin_txs_reservation_id_block_hash ON bitcoin_txs (reservati
 CREATE TABLE IF NOT EXISTS liteforge_bridge_events (
     event_id        SERIAL PRIMARY KEY,
     l2_recipient    VARCHAR NOT NULL,
-    amount          NUMERIC NOT NULL,
-    message_num     NUMERIC NOT NULL,
+    amount          VARCHAR NOT NULL,
+    message_num     VARCHAR NOT NULL,
     txhash          VARCHAR NOT NULL,
     block_hash      VARCHAR NOT NULL REFERENCES blocks(block_hash),
     block_number    INTEGER NOT NULL,

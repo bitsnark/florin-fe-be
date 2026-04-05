@@ -21,8 +21,8 @@ describe('Liteforge E2E: LTC → Sepolia → Liteforge', () => {
     const blockDb = new BlockDb();
     const materializedReservation = new MaterializedReservation();
 
-    // Use a unique owner address per test run to avoid cross-test pollution
-    const ownerAddress = `0xliteforgeE2eOwner${Date.now()}`.toLowerCase();
+    // Each test uses its own unique owner address to avoid cross-test pollution
+    const makeOwner = () => `0xlfe2eowner${Date.now()}${Math.random().toString(36).slice(2)}`.toLowerCase();
 
     let evmBlock0: number; // position created
     let evmBlock1: number; // reservation created
@@ -52,6 +52,7 @@ describe('Liteforge E2E: LTC → Sepolia → Liteforge', () => {
     }, 15000);
 
     it('liteforgeTxhash is absent before the bridge event is indexed', async () => {
+        const ownerAddress = makeOwner();
         const positionId = `lfPos${Date.now()}`;
         const reservationId = `lfRes${Date.now()}`;
 
@@ -109,6 +110,7 @@ describe('Liteforge E2E: LTC → Sepolia → Liteforge', () => {
     }, 15000);
 
     it('liteforgeTxhash appears after the Bridged event is indexed', async () => {
+        const ownerAddress = makeOwner();
         const positionId = `lfPos2${Date.now()}`;
         const reservationId = `lfRes2${Date.now()}`;
         const bridgeTxhash = `0xbridgeTx${Date.now()}`;
@@ -181,6 +183,7 @@ describe('Liteforge E2E: LTC → Sepolia → Liteforge', () => {
     }, 15000);
 
     it('bridge event at a block before the reservation is ignored', async () => {
+        const ownerAddress = makeOwner();
         const positionId = `lfPos3${Date.now()}`;
         const reservationId = `lfRes3${Date.now()}`;
         const staleBridgeTxhash = `0xstaleBridgeTx${Date.now()}`;
