@@ -62,8 +62,8 @@ const TOKEN_AMOUNT  = 100_000n; // arbitrary tokenAmount arg to reservePosition
 
 // Timeouts / polling
 const POLL_MS       = 30_000;  // 30 s between polls
-const PHASE_TIMEOUT = 10 * 60 * 1000; // 10 min per phase
-const TOTAL_TIMEOUT = 25 * 60 * 1000; // 25 min total
+const PHASE_TIMEOUT = 20 * 60 * 1000; // 20 min per phase
+const TOTAL_TIMEOUT = 45 * 60 * 1000; // 45 min total
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
