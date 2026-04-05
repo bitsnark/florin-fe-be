@@ -62,8 +62,8 @@ const TOKEN_AMOUNT  = BigInt(PAYMENT_SATS) * 10n**10n; // sats × 10^10 = EVM to
 
 // Timeouts / polling
 const POLL_MS       = 30_000;  // 30 s between polls
-const PHASE_TIMEOUT = 20 * 60 * 1000; // 20 min per phase
-const TOTAL_TIMEOUT = 45 * 60 * 1000; // 45 min total
+const PHASE_TIMEOUT = 60 * 60 * 1000; // 60 min per phase (LTC testnet blocks can be very slow)
+const TOTAL_TIMEOUT = 120 * 60 * 1000; // 120 min total
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
