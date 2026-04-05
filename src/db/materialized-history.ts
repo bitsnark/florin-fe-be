@@ -147,25 +147,48 @@ export class MaterializedHistory extends Db {
     //----------------------------------------------------------------------------------------
     // Collect owner reservation history
     protected async getOwnerReservationHistory(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
-        const reservations = await this.getOwnerCreatedReservations(address, finalityFlag, limit);
-        if (reservations.length < 1) return [];
+        const [reservations, liteforgeReservations] = await Promise.all([
+            this.getOwnerCreatedReservations(address, finalityFlag, limit),
+            this.getLiteforgeReservationsForUser(address, finalityFlag, limit),
+        ]);
+        const allReservations = [...reservations, ...liteforgeReservations];
+        if (allReservations.length < 1) return [];
 
-        const payments = await this.getOwnerBtcTransactions(reservations, finalityFlag);
+        const payments = await this.getOwnerBtcTransactions(allReservations, finalityFlag);
 
-        const ReservationsStatus = await this.getReservationLastStatus(reservations, finalityFlag);
+        const ReservationsStatus = await this.getReservationLastStatus(allReservations, finalityFlag);
 
-        const result: HistoryRecord[] = reservations.map(r => {
+        return allReservations.map(r => {
             const btcTx = payments.find(p => p.reservationId === r.reservationId);
             const rs = ReservationsStatus.find(rs => rs.reservationId === r.reservationId);
+            return { ...r, ...btcTx, ...rs };
+        });
+    }
 
-            return {
-                ...r,
-                ...btcTx,
-                ...rs
-            }
-        })
-
-        return result;
+    protected async getLiteforgeReservationsForUser(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
+        if (!config.liteforgeDepositorAddress) return [];
+        const query = `
+        SELECT DISTINCT ON (rc.reservation_id)
+            rc.reservation_id, rc.amount, rc.bitcoin_address, rc.owner_address,
+            b.chain_id as registration_chain, rc.txhash as registration_txhash,
+            b.block_number as registration_block_number, rc.block_hash as registration_block_hash,
+            b.finality, b.block_timestamp,
+            lb.txhash as liteforge_txhash
+        FROM reservation_created_events rc
+        JOIN blocks b ON rc.block_hash = b.block_hash
+        JOIN liteforge_bridge_events lb ON lb.block_number > rc.block_number
+        JOIN blocks lb_b ON lb.block_hash = lb_b.block_hash
+        WHERE lower(rc.owner_address) = lower($1)
+            AND lower(lb.l2_recipient) = lower($2)
+            AND rc.is_inscription = false
+            AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+            AND ${finalityFlag ? "lb_b.finality = 'FINAL'" : "lb_b.finality <> 'REVERTED'"}
+        ORDER BY rc.reservation_id, rc.event_id DESC
+        LIMIT $3
+        `;
+        const result = await this.query(query, [config.liteforgeDepositorAddress, address, limit]);
+        if (result.rows.length < 1) return [];
+        return mapRowsToHistoryRecords(result.rows);
     }
 
     protected async getOwnerCreatedReservations(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
