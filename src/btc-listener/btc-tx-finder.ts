@@ -41,8 +41,6 @@ export class BitcoinTxFinder {
 
 	async getPendingReservations(): Promise<PendingMaps> {
 		const pending = await this.eventsDb.getUnfulfilledReservations();
-		if (!pending || pending.length === 0)
-			throw new Error('No pending reservations found')
 
 		const byInscription: Map<string, OpenReservation> = new Map();
 		const byAddress: Map<string, OpenReservation> = new Map();
@@ -57,6 +55,7 @@ export class BitcoinTxFinder {
 
 	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
 		const reservations = await this.getPendingReservations();
+		if (reservations.byInscription.size === 0 && reservations.byAddress.size === 0) return;
 		logger.info(`BitcoinTxFinder scanBlock: ${blockHeight} byInscription:${reservations.byInscription.size} byAddress:${reservations.byAddress.size} `);
 
 		const block = await this.bitcoinRPC.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
