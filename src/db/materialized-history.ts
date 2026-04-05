@@ -31,6 +31,7 @@ export interface HistoryRecord {
     targetFinality?: Finality;
     state?: string;
     registrationTimestamp?: string;
+    liteforgeTxhash?: string;
 }
 
 export function mapRowsToHistoryRecords(rows: any[]): HistoryRecord[] {

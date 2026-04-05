@@ -1,4 +1,5 @@
 -- Drop existing tables if they exist (order matters due to foreign keys)
+DROP TABLE IF EXISTS liteforge_bridge_events;
 DROP TABLE IF EXISTS reservation_state_events;
 DROP TABLE IF EXISTS reservation_created_events;
 DROP TABLE IF EXISTS reservations;
@@ -139,4 +140,19 @@ CREATE INDEX idx_bitcoin_txs_timestamp ON bitcoin_txs (timestamp);
 CREATE INDEX idx_bitcoin_txs_txid ON bitcoin_txs (txid);
 CREATE INDEX idx_bitcoin_txs_reservation_id_block_hash ON bitcoin_txs (reservation_id, block_hash);
 
+-- ============================
+-- Table for LiteforgeBridgeEvents
+-- ============================
+CREATE TABLE IF NOT EXISTS liteforge_bridge_events (
+    event_id        SERIAL PRIMARY KEY,
+    l2_recipient    VARCHAR NOT NULL,
+    amount          NUMERIC NOT NULL,
+    message_num     NUMERIC NOT NULL,
+    txhash          VARCHAR NOT NULL,
+    block_hash      VARCHAR NOT NULL REFERENCES blocks(block_hash),
+    block_number    INTEGER NOT NULL,
+    UNIQUE (txhash)
+);
+
+CREATE INDEX IF NOT EXISTS liteforge_bridge_events_l2_recipient ON liteforge_bridge_events(l2_recipient);
 

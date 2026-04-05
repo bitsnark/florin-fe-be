@@ -55,6 +55,11 @@ export class MaterializedReservation extends MaterializedHistory {
             }
         }
 
+        const bridge = await this.getLiteforgeBridgeEvent([reservation], finalityFlag);
+        if (bridge.length === 1) {
+            reservation = { ...reservation, ...bridge[0] };
+        }
+
         return reservation
     }
 
@@ -143,5 +148,23 @@ export class MaterializedReservation extends MaterializedHistory {
 
     async getReservationsByState(reservationState: ReservationState, finalityFlag?: boolean): Promise<Reservation[]> {
         return (await this.getAllReservations(finalityFlag)).filter(r => r.state == reservationState);
+    }
+
+    protected async getLiteforgeBridgeEvent(reservations: HistoryRecord[], finalityFlag: boolean): Promise<HistoryRecord[]> {
+        const query = `
+            SELECT
+                lb.txhash as liteforge_txhash
+            FROM liteforge_bridge_events lb
+            JOIN blocks b ON lb.block_hash = b.block_hash
+            WHERE lower(lb.l2_recipient) = ANY($1)
+                AND lb.block_number > $2
+                AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+            LIMIT 1
+        `;
+        const ownerAddresses = reservations.map(r => r.ownerAddress?.toLowerCase());
+        const registrationBlockNumber = Number(reservations[0]?.registrationBlockNumber ?? 0);
+        const result = await this.query(query, [ownerAddresses, registrationBlockNumber]);
+        if (result.rows.length < 1) return [];
+        return mapRowsToHistoryRecords(result.rows);
     }
 }

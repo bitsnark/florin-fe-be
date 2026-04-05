@@ -48,6 +48,8 @@ export interface IConfig {
     btcNodeHost: string,
 
     httpPort: number;
+
+    liteforgeDepositorAddress: string;
 }
 
 export const config: IConfig = {
@@ -81,4 +83,6 @@ export const config: IConfig = {
     evmTimestampSafetyMarginSec: parse.integer('EVM_TIMESTAMP_SAFETY_MARGIN_SEC', 3600),
 
     httpPort: parse.integer('HTTP_PORT', 8080),
+
+    liteforgeDepositorAddress: parse.string('LITEFORGE_DEPOSITOR_ADDRESS', ''),
 }

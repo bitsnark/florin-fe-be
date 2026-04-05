@@ -63,6 +63,18 @@ export class EventWriter implements IEventWriter {
         });
     }
 
+    private async bridgedEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result) {
+        let index = 0;
+        await this.db.insertLiteforgeBridgeEvent({
+            blockNumber,
+            blockHash,
+            txhash,
+            l2Recipient: args[index++],
+            amount: args[index++],
+            messageNum: args[index++],
+        });
+    }
+
     private async reservationStateEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result) {
         let index = 0;
         await this.db.reservationStateChanged({
@@ -92,6 +104,10 @@ export class EventWriter implements IEventWriter {
             case 'ReservationStatusChanged':
                 await this.reservationStateEvent(blockNumber, blockHash, txhash, parsedLog.args);
                 logger.info(`parseEvent: ReservationStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
+                break;
+            case 'Bridged':
+                await this.bridgedEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                logger.info(`parseEvent: Bridged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
         }
     }
