@@ -49,7 +49,7 @@ export class BlockScanner {
                     throw new Error(`fe-be Block at height ${blockNumber} not found`);
                 }
                 for (const log of blockLogs) {
-                    await this.eventWriter.parseEvent(blockNumber, evmBlock.hash, log.txhash, log);
+                    await this.eventWriter.parseEvent(blockNumber, evmBlock.hash, log.txhash, log, log.txFrom);
                 }
                 await this.blockDb.create({
                     blockHash: evmBlock.hash,

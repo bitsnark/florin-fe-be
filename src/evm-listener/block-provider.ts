@@ -6,6 +6,7 @@ export interface LogDescriptionWithTxhash extends ethers.LogDescription {
     txhash: string;
     blockNumber: number;
     blockHash: string;
+    txFrom?: string;
 }
 
 export interface IBlockProvider {
@@ -50,11 +51,24 @@ export class BlockProvider implements IBlockProvider {
             address: config.contractAddress,
         };
         const exchangeLogs = await this.provider.getLogs(exchangeFilter);
-        const result: LogDescriptionWithTxhash[] = exchangeLogs.map(l => ({
-            ...this.contractInterface.parseLog(l),
-            txhash: l.transactionHash,
-            blockNumber: l.blockNumber,
-            blockHash: l.blockHash
+        const result: LogDescriptionWithTxhash[] = await Promise.all(exchangeLogs.map(async l => {
+            const parsed = this.contractInterface.parseLog(l);
+            const entry: LogDescriptionWithTxhash = {
+                ...parsed,
+                txhash: l.transactionHash,
+                blockNumber: l.blockNumber,
+                blockHash: l.blockHash,
+            };
+            // For Liteforge reservations, fetch the tx sender (the real user wallet)
+            if (
+                config.liteforgeDepositorAddress &&
+                parsed.name === 'ReservationCreated' &&
+                parsed.args[2]?.toLowerCase() === config.liteforgeDepositorAddress.toLowerCase()
+            ) {
+                const tx = await this.provider.getTransaction(l.transactionHash);
+                if (tx) entry.txFrom = tx.from;
+            }
+            return entry;
         }));
 
         if (config.liteforgeDepositorAddress) {

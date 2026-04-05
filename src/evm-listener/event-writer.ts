@@ -4,7 +4,7 @@ import { EventsDb } from "../db/events-db";
 import { logger } from "../common/logger";
 
 export interface IEventWriter {
-    parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription): Promise<void>;
+    parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription, txFrom?: string): Promise<void>;
 }
 
 export class EventWriter implements IEventWriter {
@@ -46,21 +46,40 @@ export class EventWriter implements IEventWriter {
         });
     }
 
-    private async reservationCreatedEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result) {
+    private async reservationCreatedEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result, txFrom?: string) {
         let index = 0;
+        const reservationId = args[index++];
+        const positionId = args[index++];
+        const ownerAddress = args[index++];
+        const amount = args[index++];
+        const isInscription = args[index++];
+        const btcAddress = args[index++];
+
         await this.db.reservationCreated({
-            blockNumber: blockNumber,
-            blockHash: blockHash,
+            blockNumber,
+            blockHash,
             txhash,
-
-            reservationId: args[index++],
-            positionId: args[index++],
-            ownerAddress: args[index++],
-            amount: args[index++],
-            isInscription: args[index++],
-            btcAddress: args[index++],
-
+            reservationId,
+            positionId,
+            ownerAddress,
+            amount,
+            isInscription,
+            btcAddress,
         });
+
+        if (
+            config.liteforgeDepositorAddress &&
+            ownerAddress?.toLowerCase() === config.liteforgeDepositorAddress.toLowerCase() &&
+            txFrom
+        ) {
+            await this.db.insertLiteforgeReservedEvent({
+                reservationId,
+                l2Recipient: txFrom,
+                txhash,
+                blockHash,
+                blockNumber,
+            });
+        }
     }
 
     private async bridgedEvent(blockNumber: number, blockHash: string, txhash: string, args: ethers.Result) {
@@ -87,7 +106,7 @@ export class EventWriter implements IEventWriter {
         });
     }
 
-    public async parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription) {
+    public async parseEvent(blockNumber: number, blockHash: string, txhash: string, parsedLog: ethers.LogDescription, txFrom?: string) {
         switch (parsedLog.name) {
             case 'PositionCreated':
                 await this.positionCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
@@ -98,7 +117,7 @@ export class EventWriter implements IEventWriter {
                 logger.info(`parseEvent: PositionStatusChanged  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationCreated':
-                await this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args);
+                await this.reservationCreatedEvent(blockNumber, blockHash, txhash, parsedLog.args, txFrom);
                 logger.info(`parseEvent: ReservationCreated  \n block ${blockNumber}|${blockHash} \n evm txhash ${txhash} \n event params ${parsedLog.args.join(' | ')}`);
                 break;
             case 'ReservationStatusChanged':

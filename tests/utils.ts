@@ -103,6 +103,11 @@ export async function createLiteforgeBridgeEvent(event: { txhash: string, blockH
     await eventsDb.insertLiteforgeBridgeEvent(event);
 }
 
+export async function createLiteforgeReservedEvent(event: { reservationId: string, l2Recipient: string, txhash: string, blockHash: string, blockNumber: number }) {
+    const eventsDb = new EventsDb();
+    await eventsDb.insertLiteforgeReservedEvent(event);
+}
+
 export async function createBtcTx(btcTx: any) {
     const btcTxDb = new BtcTxDb()
     await btcTxDb.insertTx({
