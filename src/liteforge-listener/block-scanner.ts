@@ -25,7 +25,7 @@ export class LiteforgeBlockScanner {
         const chainId = config.liteforgeL2ChainId;
 
         let blockStart = config.liteforgeL2BlockStart;
-        const highest = await this.blockDb.getHighestBlock(chainId, true);
+        const highest = await this.blockDb.getHighestBlock(chainId, false);
         if (highest) blockStart = highest.blockNumber + 1;
         // Subtract 2 to avoid "Unknown block" errors from RPC nodes not yet indexing the latest block
         const blockEnd = (await throttle(this.provider.getBlockNumber.bind(this.provider))) - 2;
