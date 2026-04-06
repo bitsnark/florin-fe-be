@@ -55,6 +55,7 @@ export interface IConfig {
     liteforgeSwapAddress: string;
     liteforgeL2ChainId: number;
     liteforgeL2BlockStart: number;
+    liteforgeL2FinalityBlocks: number;
 }
 
 export const config: IConfig = {
@@ -95,4 +96,5 @@ export const config: IConfig = {
     liteforgeSwapAddress: parse.string('LITEFORGE_SWAP_ADDRESS', ''),
     liteforgeL2ChainId: parse.integer('LITEFORGE_L2_CHAIN_ID', 0),
     liteforgeL2BlockStart: parse.integer('LITEFORGE_L2_BLOCK_START', 0),
+    liteforgeL2FinalityBlocks: parse.integer('LITEFORGE_L2_FINALITY_BLOCKS', 1),
 }

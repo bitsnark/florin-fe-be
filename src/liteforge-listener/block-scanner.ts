@@ -34,7 +34,7 @@ export class LiteforgeBlockScanner {
 
         if (blockStart > blockEnd) return;
 
-        const firstUnknown = blockEnd - config.finalityBlocks;
+        const firstUnknown = blockEnd - config.liteforgeL2FinalityBlocks;
 
         for (let batchStart = blockStart; batchStart <= blockEnd; batchStart += SCAN_BATCH_SIZE) {
             const batchEnd = Math.min(batchStart + SCAN_BATCH_SIZE - 1, blockEnd);
@@ -96,7 +96,7 @@ export class LiteforgeBlockScanner {
         const highest = await this.provider.getBlockNumber();
 
         const blocks = (await this.blockDb.getBlocksByFinality(chainId, Finality.UNKNOWN))
-            .filter(block => block.blockNumber + config.finalityBlocks < highest);
+            .filter(block => block.blockNumber + config.liteforgeL2FinalityBlocks < highest);
 
         logger.info(`liteforge-scanner finalizeBlocks: highest:${highest} blocks to finalize:${blocks.length}`);
 
