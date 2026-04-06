@@ -31,13 +31,14 @@ export interface HistoryRecord {
     targetFinality?: Finality;
     state?: string;
     registrationTimestamp?: string;
+    liteforgeTxhash?: string;
 }
 
 export function mapRowsToHistoryRecords(rows: any[]): HistoryRecord[] {
     return rows.map((row) => {
         const mappedRow: any = {};
         for (const key in row) {
-            if (Object.prototype.hasOwnProperty.call(row, key)) {
+            if (Object.prototype.hasOwnProperty.call(row, key) && row[key] !== null) {
                 // Convert '_x' to 'X'
                 const convertedKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
                 mappedRow[convertedKey] = row[key];
@@ -65,10 +66,14 @@ export class MaterializedHistory extends Db {
         const positions = await this.getOwnerFullPositions(address, finalityFlag, limit);
         if (positions.length < 1) return [];
 
-        const btcTxs = await this.getBtcTxsByPositions(positions, finalityFlag);
+        const [btcTxs, positionStates] = await Promise.all([
+            this.getBtcTxsByPositions(positions, finalityFlag),
+            this.getPositionLastStatus(positions, finalityFlag),
+        ]);
 
         const result: HistoryRecord[] = positions.map(p => {
             const btcTx = btcTxs.find(b => b.positionId === p.positionId);
+            const posState = positionStates.find(s => s.positionId === p.positionId);
             return {
                 ...p,
                 originChain: p.registrationChain,
@@ -77,11 +82,27 @@ export class MaterializedHistory extends Db {
                 originBlockHash: p.registrationBlockHash,
                 originFinality: p.registrationFinality,
                 originAmount: p.amount,
-                ...btcTx
+                ...btcTx,
+                state: posState?.state,
             }
         })
 
         return result;
+    }
+
+    protected async getPositionLastStatus(positions: HistoryRecord[], finalityFlag?: boolean): Promise<HistoryRecord[]> {
+        const query = `
+        SELECT DISTINCT ON (ps.position_id)
+            ps.position_id, ps.state
+        FROM position_state_events ps, blocks b
+        WHERE ps.block_hash = b.block_hash
+            AND ps.position_id = ANY($1)
+            AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+        ORDER BY ps.position_id, ps.event_id DESC
+        `;
+        const result = await this.query(query, [positions.map(p => p.positionId)]);
+        if (result.rows.length < 1) return [];
+        return mapRowsToHistoryRecords(result.rows);
     }
 
 
@@ -126,25 +147,57 @@ export class MaterializedHistory extends Db {
     //----------------------------------------------------------------------------------------
     // Collect owner reservation history
     protected async getOwnerReservationHistory(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
-        const reservations = await this.getOwnerCreatedReservations(address, finalityFlag, limit);
-        if (reservations.length < 1) return [];
+        const [reservations, liteforgeReservations] = await Promise.all([
+            this.getOwnerCreatedReservations(address, finalityFlag, limit),
+            this.getLiteforgeReservationsForUser(address, finalityFlag, limit),
+        ]);
+        const allReservations = [...reservations, ...liteforgeReservations];
+        if (allReservations.length < 1) return [];
 
-        const payments = await this.getOwnerBtcTransactions(reservations, finalityFlag);
+        const payments = await this.getOwnerBtcTransactions(allReservations, finalityFlag);
 
-        const ReservationsStatus = await this.getReservationLastStatus(reservations, finalityFlag);
+        const ReservationsStatus = await this.getReservationLastStatus(allReservations, finalityFlag);
 
-        const result: HistoryRecord[] = reservations.map(r => {
+        return allReservations.map(r => {
             const btcTx = payments.find(p => p.reservationId === r.reservationId);
             const rs = ReservationsStatus.find(rs => rs.reservationId === r.reservationId);
+            return { ...r, ...btcTx, ...rs };
+        });
+    }
 
-            return {
-                ...r,
-                ...btcTx,
-                ...rs
-            }
-        })
-
-        return result;
+    protected async getLiteforgeReservationsForUser(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
+        if (!config.liteforgeDepositorAddress) return [];
+        // Join on liteforge_reserved_events (populated at reservation creation time)
+        // so reservations appear immediately, before the Bridged event fires.
+        // Optionally pick up liteforgeTxhash if the bridge event has already been indexed.
+        const query = `
+        SELECT DISTINCT ON (rc.reservation_id)
+            rc.reservation_id, rc.amount, rc.bitcoin_address, rc.owner_address,
+            b.chain_id as registration_chain, rc.txhash as registration_txhash,
+            b.block_number as registration_block_number, rc.block_hash as registration_block_hash,
+            b.finality, b.block_timestamp,
+            (
+                SELECT lb.txhash
+                FROM liteforge_bridge_events lb
+                JOIN blocks lb_b ON lb.block_hash = lb_b.block_hash
+                WHERE lower(lb.l2_recipient) = lower(lre.l2_recipient)
+                    AND lb.block_number > rc.block_number
+                    AND ${finalityFlag ? "lb_b.finality = 'FINAL'" : "lb_b.finality <> 'REVERTED'"}
+                ORDER BY lb.block_number ASC
+                LIMIT 1
+            ) as liteforge_txhash
+        FROM reservation_created_events rc
+        JOIN blocks b ON rc.block_hash = b.block_hash
+        JOIN liteforge_reserved_events lre ON lre.reservation_id = rc.reservation_id
+        WHERE lower(lre.l2_recipient) = lower($1)
+            AND rc.is_inscription = false
+            AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+        ORDER BY rc.reservation_id, rc.event_id DESC
+        LIMIT $2
+        `;
+        const result = await this.query(query, [address, limit]);
+        if (result.rows.length < 1) return [];
+        return mapRowsToHistoryRecords(result.rows);
     }
 
     protected async getOwnerCreatedReservations(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {

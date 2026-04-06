@@ -98,6 +98,16 @@ export interface ReservationBtcTx {
     positionId: string;
 }
 
+export async function createLiteforgeBridgeEvent(event: { txhash: string, blockHash: string, blockNumber: number, l2Recipient: string, amount: bigint, messageNum: bigint }) {
+    const eventsDb = new EventsDb();
+    await eventsDb.insertLiteforgeBridgeEvent(event);
+}
+
+export async function createLiteforgeReservedEvent(event: { reservationId: string, l2Recipient: string, txhash: string, blockHash: string, blockNumber: number }) {
+    const eventsDb = new EventsDb();
+    await eventsDb.insertLiteforgeReservedEvent(event);
+}
+
 export async function createBtcTx(btcTx: any) {
     const btcTxDb = new BtcTxDb()
     await btcTxDb.insertTx({

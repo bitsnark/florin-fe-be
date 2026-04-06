@@ -1,6 +1,5 @@
-import { decodeBytes32ToBitcoinAddress } from '../common/encode-decode';
 import { config } from '../common/config';
-import { AddressType, Reservation, ReservationState } from '../common/types';
+import { Reservation, ReservationState } from '../common/types';
 import { HistoryRecord, mapRowsToHistoryRecords, MaterializedHistory } from './materialized-history';
 
 function rowToReservation(row: any): Reservation {
@@ -56,6 +55,11 @@ export class MaterializedReservation extends MaterializedHistory {
             }
         }
 
+        const bridge = await this.getLiteforgeBridgeEvent([reservation], finalityFlag);
+        if (bridge.length === 1) {
+            reservation = { ...reservation, ...bridge[0] };
+        }
+
         return reservation
     }
 
@@ -77,6 +81,13 @@ export class MaterializedReservation extends MaterializedHistory {
         if (result.rows.length < 1) return;
         return mapRowsToHistoryRecords(result.rows)[0];
 
+    }
+
+    // Returns the expected scriptPubKey hex for a reservation's bytes32-encoded address.
+    // Used for matching against vout.scriptPubKey.hex in block data (nodes don't always return address fields).
+    private bytes32ToScriptPubKeyHex(bytes32: string, isInscription: boolean): string {
+        const hex = bytes32.startsWith('0x') ? bytes32.slice(2) : bytes32;
+        return '5120' + hex;                              // P2TR:   5120 + 32 bytes
     }
 
     async getUnfulfilledReservations(): Promise<OpenReservation[]> {
@@ -101,15 +112,13 @@ export class MaterializedReservation extends MaterializedHistory {
         where bt.block_hash = bb.block_hash) as btc
 		ON rce.reservation_id = btc.reservation_id
         WHERE br.chain_id =$1
-        AND btc_finality <> 'REVERTED' OR btc_finality IS NULL
+        AND (btc_finality IS NULL OR btc_finality = 'REVERTED')
 	    AND br.finality <> 'REVERTED'
         ORDER BY rce.reservation_id DESC;`
         const result = await this.query(query, [config.chainId]);
         return result.rows.map(row => ({
             reservationId: row.reservation_id,
-            bitcoinAddress: decodeBytes32ToBitcoinAddress(
-                row.bitcoin_address,
-                row.is_inscription ? AddressType.P2WPKH : AddressType.P2TR),
+            bitcoinAddress: this.bytes32ToScriptPubKeyHex(row.bitcoin_address, row.is_inscription),
             amount: row.amount,
             isInscription: row.is_inscription,
             txid: row.txid,
@@ -139,5 +148,30 @@ export class MaterializedReservation extends MaterializedHistory {
 
     async getReservationsByState(reservationState: ReservationState, finalityFlag?: boolean): Promise<Reservation[]> {
         return (await this.getAllReservations(finalityFlag)).filter(r => r.state == reservationState);
+    }
+
+    protected async getLiteforgeBridgeEvent(reservations: HistoryRecord[], finalityFlag: boolean): Promise<HistoryRecord[]> {
+        // For Liteforge reservations, ownerAddress is LiteforgeDepositor — the real
+        // recipient is stored in liteforge_reserved_events. Use COALESCE to prefer
+        // that over ownerAddress so regular reservations still work.
+        const query = `
+            SELECT lb.txhash as liteforge_txhash
+            FROM liteforge_bridge_events lb
+            JOIN blocks b ON lb.block_hash = b.block_hash
+            WHERE lower(lb.l2_recipient) = ANY(
+                SELECT COALESCE(lower(lre.l2_recipient), lower(rc.owner_address))
+                FROM reservation_created_events rc
+                LEFT JOIN liteforge_reserved_events lre ON lre.reservation_id = rc.reservation_id
+                WHERE rc.reservation_id = ANY($1)
+            )
+            AND lb.block_number > $2
+            AND ${finalityFlag ? "b.finality = 'FINAL'" : "b.finality <> 'REVERTED'"}
+            LIMIT 1
+        `;
+        const reservationIds = reservations.map(r => r.reservationId);
+        const registrationBlockNumber = Number(reservations[0]?.registrationBlockNumber ?? 0);
+        const result = await this.query(query, [reservationIds, registrationBlockNumber]);
+        if (result.rows.length < 1) return [];
+        return mapRowsToHistoryRecords(result.rows);
     }
 }

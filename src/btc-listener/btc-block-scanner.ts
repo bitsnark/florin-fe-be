@@ -62,35 +62,18 @@ export class BtcBlockScanner {
 		const blocks = (await this.blockDb.getBlocksByFinality(config.btcChainId, Finality.UNKNOWN))
 			.filter(block => block.blockNumber + config.btcFinalityBlocks <= highest);
 
-		// Map them according to height and check if they exist in the node
+		// Map them according to height
 		const heightMap: { [key: number]: Block[] } = {};
 		for (const block of blocks) {
 			heightMap[block.blockNumber] = heightMap[block.blockNumber] ?? [];
 			heightMap[block.blockNumber].push(block);
-			try {
-				//if block does not exists in the node, it will throw
-				const btcBlock = await this.btcProvider.getBlock(block.blockHash, BlockVerbosity.json);
-				if (btcBlock) {
-					block.finality = Finality.FINAL;
-					if (btcBlock.height != block.blockNumber) {
-						logger.error(`Block in DB has incorrect rpcHeight: ${btcBlock.height} dbHeight${block.blockNumber} hash: ${block.blockHash}`);
-						throw new Error(`Block in DB has incorrect rpcHeight: ${btcBlock.height} dbHeight${block.blockNumber} hash: ${block.blockHash}`);
-					}
-				}
-			} catch (error) { continue }
 		}
 
-		// Some sanity
+		// For each height, fetch the canonical hash and mark the matching block FINAL
 		for (const blockNumber of Object.keys(heightMap)) {
-			let final = 0;
+			const canonicalHash = await this.btcProvider.getBlockHash(Number(blockNumber));
 			for (const block of heightMap[Number(blockNumber)]) {
-				final += block.finality == Finality.FINAL ? 1 : 0;
-			}
-			if (final == 0) {
-				throw new Error(`No final blocks for height: ${blockNumber}`);
-			}
-			if (final > 1) {
-				throw new Error(`More than one final block for height: ${blockNumber}`);
+				if (block.blockHash === canonicalHash) block.finality = Finality.FINAL;
 			}
 		}
 

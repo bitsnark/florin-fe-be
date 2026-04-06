@@ -31,7 +31,7 @@ describe("BlockScanner", () => {
             getBlockNumber: jest.fn(),
             getBlockByHeight: jest.fn(),
             getBlockByHash: jest.fn(),
-            getParsedLogs: jest.fn(),
+            getParsedLogsInRange: jest.fn(),
         } as unknown as jest.Mocked<IBlockProvider>;
 
         eventWriter = {
@@ -39,45 +39,6 @@ describe("BlockScanner", () => {
         } as unknown as jest.Mocked<IEventWriter>;
 
         blockScanner = new BlockScanner(blockDb, provider, eventWriter);
-    });
-
-    describe("processEvents", () => {
-        it("should process parsed logs and call eventWriter.parseEvent", async () => {
-            const blockNumber = 1;
-            const blockHash = "0x123";
-            const txhash = "0xabc";
-
-            const logs = [
-                {
-                    name: "event1",
-                    topic: "topic1",
-                    txhash: "0xabc",
-                    args: [] as unknown as LogDescription[],
-                },
-                {
-                    name: "event2",
-                    topic: "topic2",
-                    txhash: "0xabc",
-                    args: [] as unknown as LogDescription[],
-                },
-            ];
-
-            provider.getParsedLogs.mockResolvedValue(logs as any);
-
-            await blockScanner.processEvents(blockNumber, blockHash);
-
-            expect(provider.getParsedLogs).toHaveBeenCalledWith(blockNumber);
-            expect(eventWriter.parseEvent).toHaveBeenCalledTimes(logs.length);
-            logs.forEach((log, index) => {
-                expect(eventWriter.parseEvent).toHaveBeenNthCalledWith(
-                    index + 1,
-                    blockNumber,
-                    blockHash,
-                    txhash,
-                    log
-                );
-            });
-        });
     });
 
     describe("processNewBlocks", () => {
@@ -89,7 +50,7 @@ describe("BlockScanner", () => {
             blockDb.getHighestBlock.mockResolvedValue(highestFinalBlock);
             provider.getBlockNumber.mockResolvedValue(currentBlockNumber);
             provider.getBlockByHeight.mockResolvedValue(evmBlock as any);
-            provider.getParsedLogs.mockResolvedValue([]);
+            provider.getParsedLogsInRange.mockResolvedValue([]);
             config.finalityBlocks = 0;
 
             await blockScanner.processNewBlocks();

@@ -72,6 +72,43 @@ export class EventsDb extends Db {
     return result.rows[0];
   }
 
+  async insertLiteforgeBridgeEvent(event: { txhash: string, blockHash: string, blockNumber: number, l2Recipient: string, amount: bigint, messageNum: bigint }): Promise<number> {
+    const query = `
+      INSERT INTO liteforge_bridge_events
+      (txhash, block_hash, block_number, l2_recipient, amount, message_num)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (txhash) DO NOTHING
+      RETURNING event_id
+    `;
+    const result = await this.query(query, [
+      event.txhash,
+      event.blockHash,
+      event.blockNumber,
+      event.l2Recipient,
+      String(event.amount),
+      String(event.messageNum),
+    ]);
+    return result.rows[0];
+  }
+
+  async insertLiteforgeReservedEvent(event: { reservationId: string, l2Recipient: string, txhash: string, blockHash: string, blockNumber: number }): Promise<number> {
+    const query = `
+      INSERT INTO liteforge_reserved_events
+      (reservation_id, l2_recipient, txhash, block_hash, block_number)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (reservation_id) DO NOTHING
+      RETURNING event_id
+    `;
+    const result = await this.query(query, [
+      event.reservationId,
+      event.l2Recipient,
+      event.txhash,
+      event.blockHash,
+      event.blockNumber,
+    ]);
+    return result.rows[0];
+  }
+
   async reservationStateChanged(event: Exclude<ReservationStateEvent, 'eventId'>): Promise<number> {
     const query = `
     INSERT INTO reservation_state_events

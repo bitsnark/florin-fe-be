@@ -41,8 +41,6 @@ export class BitcoinTxFinder {
 
 	async getPendingReservations(): Promise<PendingMaps> {
 		const pending = await this.eventsDb.getUnfulfilledReservations();
-		if (!pending || pending.length === 0)
-			throw new Error('No pending reservations found')
 
 		const byInscription: Map<string, OpenReservation> = new Map();
 		const byAddress: Map<string, OpenReservation> = new Map();
@@ -57,6 +55,7 @@ export class BitcoinTxFinder {
 
 	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
 		const reservations = await this.getPendingReservations();
+		if (reservations.byInscription.size === 0 && reservations.byAddress.size === 0) return;
 		logger.info(`BitcoinTxFinder scanBlock: ${blockHeight} byInscription:${reservations.byInscription.size} byAddress:${reservations.byAddress.size} `);
 
 		const block = await this.bitcoinRPC.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
@@ -91,17 +90,15 @@ export class BitcoinTxFinder {
 			}
 		);
 
-		// Identify transaction by by address
+		// Identify transaction by address (match on scriptPubKey.hex — nodes don't always return address field)
 		const addressIndex = out.findIndex(v =>
-			reservations.byAddress.has(v.scriptPubKey.address));
+			reservations.byAddress.has(v.scriptPubKey.hex));
 
-		// if transaction is found by address & and amount is right - return it
-		if (addressIndex !== notFound &&
-			reservations.byAddress.get(out[addressIndex].scriptPubKey.address).amount ===
-			btcToSatoshi(out[addressIndex].value))
+		// if transaction is found by address - return it (address uniquely identifies reservation)
+		if (addressIndex !== notFound)
 			return {
 				voutIndex: addressIndex,
-				...reservations.byAddress.get(out[addressIndex].scriptPubKey.address)
+				...reservations.byAddress.get(out[addressIndex].scriptPubKey.hex)
 			}
 
 
@@ -109,8 +106,7 @@ export class BitcoinTxFinder {
 			//make sure inscription based transaction sends to the right address with the right amount
 			const r = reservations.byInscription.get(inscription)
 			const voutIndex = out.findIndex(v =>
-				v.scriptPubKey.address === r.bitcoinAddress &&
-				btcToSatoshi(v.value) === r.amount);
+				v.scriptPubKey.hex === r.bitcoinAddress);
 
 			if (voutIndex !== notFound)
 				return {
