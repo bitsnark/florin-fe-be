@@ -121,15 +121,53 @@ async function ltcRpc(method: string, ...params: unknown[]): Promise<unknown> {
 }
 
 /**
- * Scan the UTXO set for an LTC address and return the total confirmed sats.
- * Uses scantxoutset which works without the address being in the node's wallet.
+ * Derive the P2WPKH scriptPubKey hex for an LTC bech32 address.
+ * Result looks like "0014<20-byte-pubkey-hash-hex>".
  */
-async function getLtcAddressBalanceSats(address: string): Promise<number> {
-    const result = await ltcRpc('scantxoutset', 'start', [`addr(${address})`]) as {
-        total_amount: number;
-        unspents: unknown[];
-    };
-    return Math.round((result.total_amount ?? 0) * 1e8);
+function ltcAddressToScriptPubKeyHex(address: string): string {
+    const decoded = bech32.decode(address);
+    const program = Buffer.from(bech32.fromWords(decoded.words.slice(1)));
+    return '0014' + program.toString('hex');
+}
+
+interface LtcPayment { txid: string; sats: number; confirmed: boolean; }
+
+/**
+ * Scan mempool + blocks since `sinceBlock` for any output paying to `address`.
+ * Returns the first match found, or null if nothing found yet.
+ */
+async function findLtcPaymentToAddress(address: string, sinceBlock: number): Promise<LtcPayment | null> {
+    const targetScript = ltcAddressToScriptPubKeyHex(address);
+
+    // 1. Check mempool (catches unconfirmed payments quickly)
+    try {
+        const mempoolTxids = await ltcRpc('getrawmempool') as string[];
+        for (const txid of mempoolTxids) {
+            try {
+                const tx = await ltcRpc('getrawtransaction', txid, true) as { vout: Array<{ value: number; scriptPubKey: { hex: string } }> };
+                for (const vout of tx.vout ?? []) {
+                    if (vout.scriptPubKey?.hex === targetScript) {
+                        return { txid, sats: Math.round(vout.value * 1e8), confirmed: false };
+                    }
+                }
+            } catch { continue; }
+        }
+    } catch { /* mempool RPC not available — fall through to block scan */ }
+
+    // 2. Scan blocks from sinceBlock to current tip
+    const currentHeight = await ltcRpc('getblockcount') as number;
+    for (let h = sinceBlock; h <= currentHeight; h++) {
+        const blockHash = await ltcRpc('getblockhash', h) as string;
+        const block = await ltcRpc('getblock', blockHash, 2) as { tx: Array<{ txid: string; vout: Array<{ value: number; scriptPubKey: { hex: string } }> }> };
+        for (const tx of block.tx ?? []) {
+            for (const vout of tx.vout ?? []) {
+                if (vout.scriptPubKey?.hex === targetScript) {
+                    return { txid: tx.txid, sats: Math.round(vout.value * 1e8), confirmed: true };
+                }
+            }
+        }
+    }
+    return null;
 }
 
 /**
@@ -189,14 +227,14 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
         const ltcP2wpkh      = bitcoin.payments.p2wpkh({ pubkey: Buffer.from(ltcKeyPair.publicKey), network: LTC_TESTNET });
         const ltcReceiveAddress = ltcP2wpkh.address!;
 
-        const l2Balance  = await l2Provider.getBalance(l2Wallet.address);
-        const ltcBlock   = await ltcRpc('getblockcount') as number;
+        const l2Balance      = await l2Provider.getBalance(l2Wallet.address);
+        const ltcBlockBefore = await ltcRpc('getblockcount') as number;
 
         progress(`L2 RPC:            ${L2_RPC_URL}`);
         progress(`L2 wallet:         ${l2Wallet.address}`);
         progress(`L2 balance:        ${ethers.formatEther(l2Balance)} zkLTC`);
         progress(`LTC receive addr:  ${ltcReceiveAddress} (P2WPKH, derived from same key)`);
-        progress(`LTC tip:           block ${ltcBlock}`);
+        progress(`LTC tip:           block ${ltcBlockBefore}`);
         progress(`Florin API:        ${FLORIN_API}`);
         progress(`LiteforgeSwap:     ${LITEFORGE_SWAP_ADDR}`);
         progress(`Swap amount:       ${SWAP_SATS} sats (${ethers.formatEther(SWAP_WEI)} zkLTC)`);
@@ -207,11 +245,6 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
                 `need at least ${ethers.formatEther(SWAP_WEI)} zkLTC (plus gas)`
             );
         }
-
-        // Record LTC balance before the test so we can detect the incoming payment
-        progress('\nRecording initial LTC balance at receive address…');
-        const initialLtcSats = await getLtcAddressBalanceSats(ltcReceiveAddress);
-        progress(`Initial LTC balance: ${initialLtcSats} sats`);
 
         // ── 2. Encode LTC address as bytes32 ──────────────────────────────
         progress('\n=== STEP 2: Encode LTC receive address as bytes32 ===');
@@ -284,37 +317,38 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
 
         // ── 5. Wait for florin-mm to send LTC ────────────────────────────
         progress('\n=== STEP 5: Waiting for florin-mm to send LTC ===');
-        progress(`Polling LTC balance at ${ltcReceiveAddress} every ${POLL_MS / 1000}s…`);
+        progress(`Scanning mempool + blocks from ${ltcBlockBefore} for payment to ${ltcReceiveAddress}`);
         progress(`(florin-mm sends LTC once the L2 swap block reaches finality)`);
-        progress(`Initial balance: ${initialLtcSats} sats — waiting for it to increase…`);
 
-        const finalLtcSats = await pollUntil(
+        const ltcPayment = await pollUntil(
             'LTC received',
-            () => getLtcAddressBalanceSats(ltcReceiveAddress),
-            sats => sats > initialLtcSats,
-            (sats, attempt) => {
-                progress(`  [attempt ${attempt}] LTC balance: ${sats} sats (waiting for > ${initialLtcSats})`);
+            () => findLtcPaymentToAddress(ltcReceiveAddress, ltcBlockBefore),
+            p => p !== null,
+            (p, attempt) => {
+                if (p) {
+                    progress(`  [attempt ${attempt}] Payment found! txid=${p.txid} sats=${p.sats} confirmed=${p.confirmed}`);
+                } else {
+                    progress(`  [attempt ${attempt}] No payment yet — checking mempool + new blocks…`);
+                }
             },
             PHASE_TIMEOUT,
         );
 
-        const receivedSats = finalLtcSats - initialLtcSats;
-        progress(`\nLTC received! Balance increased by ${receivedSats} sats`);
-        progress(`New total at receive address: ${finalLtcSats} sats`);
+        progress(`\nLTC received! ${ltcPayment.sats} sats (confirmed=${ltcPayment.confirmed})`);
 
         // ── 6. Final assertions ───────────────────────────────────────────
         progress('\n=== STEP 6: Assertions ===');
 
         expect(indexedSwap).not.toBeNull();
         expect((indexedSwap as Record<string, unknown>).l2TxHash).toBeDefined();
-        expect(finalLtcSats).toBeGreaterThan(initialLtcSats);
-        expect(receivedSats).toBeGreaterThan(0);
+        expect(ltcPayment).not.toBeNull();
+        expect(ltcPayment.sats).toBeGreaterThan(0);
 
         progress('\n✓ All assertions passed. Full Liteforge L2 → LTC flow completed!');
         progress(`  L2 tx hash:      ${l2TxHash}`);
         progress(`  L2 block:        ${swapReceipt.blockNumber}`);
         progress(`  messageNum:      ${messageNum}`);
-        progress(`  LTC received:    ${receivedSats} sats at ${ltcReceiveAddress}`);
+        progress(`  LTC received:    ${ltcPayment.sats} sats (txid=${ltcPayment.txid}) at ${ltcReceiveAddress}`);
 
     }, TOTAL_TIMEOUT);
 
