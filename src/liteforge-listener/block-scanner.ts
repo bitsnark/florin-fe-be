@@ -27,8 +27,8 @@ export class LiteforgeBlockScanner {
         let blockStart = config.liteforgeL2BlockStart;
         const highest = await this.blockDb.getHighestBlock(chainId, false);
         if (highest) blockStart = highest.blockNumber + 1;
-        // Subtract 2 to avoid "Unknown block" errors from RPC nodes not yet indexing the latest block
-        const blockEnd = (await throttle(this.provider.getBlockNumber.bind(this.provider))) - 2;
+        // No buffer: Caldera is a managed single-sequencer chain where the latest block is always indexed
+        const blockEnd = await throttle(this.provider.getBlockNumber.bind(this.provider));
 
         logger.info(`liteforge-scanner processNewBlocks chainId:${chainId} blockStart:${blockStart} blockEnd:${blockEnd}`);
 
