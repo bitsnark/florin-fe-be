@@ -1,97 +1,139 @@
 # florin-fe-be
-a backend api for supporting Florin UI,
-mainly collecting and constructing historical records.
 
-This repo assumes the deployment of the florin contracts - and its evm listener tracks AMMExchange contracts events (for more info https://github.com/bitsnark/florin/tree/main/packages/contracts)
+Backend service for the Florin UI. Indexes events from the [AMMExchange](https://github.com/bitsnark/florin/tree/main/packages/contracts) contract on EVM and matches them with Bitcoin/Litecoin payment transactions. Exposes a REST API for querying positions, reservations, and transaction history.
 
-Evm block scanner collects meaningful events from the AMMExchange contract,
-Btc block scanner retrieve associated, mined, bitcoin transactions.
+Three independent processes run in parallel:
 
-## Development
+- **API** — HTTP server for UI queries
+- **EVM scanner** — streams AMMExchange contract events into PostgreSQL
+- **BTC scanner** — scans Bitcoin/Litecoin blocks for reservation payment transactions
 
-```npm i```
-to install all dependencies
+## Setup
 
-npm run postgres will generate a docker container with a florin-be-fe postgres db
-hardhat node defined as default (check default values in config)
-
-## Enviroment Variables
-Most important are the env variables which defined your evm node, btc node, and postgres connection.
-Here are the variable list with some default, test, values
-
-### Postgres Configuration
-POSTGRES_USER=postgres
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DATABASE=florin_fe_be
-POSTGRES_PASSWORD=1234
-POSTGRES_KEEP_ALIVE=false
-
-### Evm Configuration
-PROVIDER_URL=http://localhost:8545
-BLOCK_START=0 // Use the contract deploy evm block number in production
-CHAIN_ID=31337
-CONTRACT_ADDRESS=0x0165878A594ca255338adfa4d48449f69242Eb8F <-- Fixed hardhat address (AMMExchange)
-MM_POSITION_ID=0x661b62831efbed6b8c6dd86ea7ed5ae2ecd4cc21c8dbccfafd4790f63e2647c1 <-- for development and testing, the AMMExchange is deployed with a predefined MM position - this is its static address
-FINALITY_BLOCKS= // the amount of evm blocks to block finality assumption
-LOOP_INTERVAL_MS=10000 // sleep between evm listener cycles
-
-### Bitcoin Configuration
-BTC_CHAIN_ID=-1 //-1 testnet4. use negative to prevent evm/btc ids collision
-BTC_BLOCK_START=82656//Excluded from btc block scanner. No point of setting earlier then oracle initial block.
-BTC_FINALITY_BLOCKS=3//6 in production
-BTC_NODE_USERNAME=
-BTC_NODE_PASSWORD=
-BTC_NODE_HOST=http://xx.xx.xx.xx:port
-
-BTC_ADDRESS_PREFIXES=//valid values are TESTNET or MAINNET. Required for bitcoin address encode/decode
-EVM_TIMESTAMP_SAFETY_MARGIN_SEC=//The amount of sec to buffer in order to sync evm & btc block timestamps
-THROTTLE_INTERVAL= im MS
-RETRIES_ON_FAIL=default 2
-###
-# HTTP/HTTPS Configuration
-HTTP_PORT=8080
-
-## Run
-To transpile typescript:
-```
-npm run build
+```sh
+npm install
 ```
 
-To run server and btc/evm block scanners and process blocks
-```
-npm run start
-```
+Start a local PostgreSQL instance (Docker):
 
-
-to run only server without block scanners
-```
-npm run start:server
-```
-
-to drop and create a postgres docker container
-```
+```sh
 npm run postgres
 ```
 
-### API
-The server supports the following calls:
+Initialize the schema:
 
-get /history/address (user evm address)
-get /reservation/reservationId
-get /position/positionsId
-get /btcBlockCount (the block height of the bitcoin blockchain)
+```sh
+psql -U postgres -d florin_fe_be -f db/schema.sql
+```
 
-## Contracts redeploy
-When redeploying contracts, yet staying on the same chain:
-change evm BLOCK_START= (if not hardhat)
-change btc BTC_BLOCK_START=
-change CONTRACT_ADDRESS=
+Copy `sample.env` to `.env` and fill in the values (see [Environment Variables](#environment-variables)).
 
-wipe DB data (could leave blocks)
+## Running
 
-## logs
+Run all three services together:
 
-in ./data/app.log
+```sh
+npm start
+```
 
+Or run each service independently:
 
+```sh
+npm run start:evm-scanner
+npm run start:btc-scanner
+npm run start:server
+```
+
+In production, each service is managed by PM2 using the shell scripts `run-api.sh`, `run-evm-scanner.sh`, and `run-btc-scanner.sh`.
+
+## Environment Variables
+
+See `sample.env` for a complete template.
+
+### PostgreSQL
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `POSTGRES_HOST` | `localhost` | DB host |
+| `POSTGRES_PORT` | `5432` | DB port |
+| `POSTGRES_DATABASE` | `florin_fe_be` | DB name |
+| `POSTGRES_USER` | `postgres` | DB user |
+| `POSTGRES_PASSWORD` | `1234` | DB password |
+| `POSTGRES_KEEP_ALIVE` | `false` | Keep TCP connection alive |
+
+### EVM
+
+| Variable | Description |
+| --- | --- |
+| `PROVIDER_URL` | EVM JSON-RPC endpoint |
+| `CHAIN_ID` | EVM chain ID (e.g. `11155111` for Sepolia) |
+| `CONTRACT_ADDRESS` | AMMExchange contract address |
+| `MM_POSITION_ID` | Market maker position ID (bytes32 hex) |
+| `BLOCK_START` | First block to scan (use contract deploy block) |
+| `FINALITY_BLOCKS` | Blocks to wait before treating a block as final (e.g. `20`) |
+| `LOOP_INTERVAL_MS` | Sleep between scanner cycles (ms) |
+
+### Bitcoin / Litecoin
+
+| Variable | Description |
+| --- | --- |
+| `BTC_CHAIN_ID` | Chain ID for the BTC chain in the DB (must not collide with EVM chain ID) |
+| `BTC_NODE_HOST` | Bitcoin node RPC URL |
+| `BTC_NODE_USERNAME` | RPC username |
+| `BTC_NODE_PASSWORD` | RPC password |
+| `BTC_BLOCK_START` | First block to scan |
+| `BTC_FINALITY_BLOCKS` | Blocks to wait before treating a BTC block as final (`1` for testnet, `6` for mainnet) |
+
+### HTTP Server
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `HTTP_PORT` | `80` | HTTP listen port |
+| `HTTPS_PORT` | `443` | HTTPS listen port |
+
+### Transfer Limits
+
+| Variable | Description |
+| --- | --- |
+| `BTC_MAX_ALLOWED_TRANSFER` | Max allowed BTC payment in satoshis |
+| `EVM_MAX_ALLOWED_TRANSFER` | Max allowed EVM token transfer |
+
+## API
+
+### `GET /history/:address`
+
+Returns all positions and reservations associated with an EVM address, ordered by block number.
+
+### `GET /reservation/:reservationId`
+
+Returns a single reservation by ID (bytes32 hex), including its current state and any associated BTC payment.
+
+### `GET /position/:positionId`
+
+Returns a single position by ID (bytes32 hex), including its current state.
+
+### `GET /btcBlockCount`
+
+Returns the current highest indexed Bitcoin/Litecoin block number.
+
+## Re-deploying Contracts
+
+When redeploying the AMMExchange contract on the same chain:
+
+1. Update `CONTRACT_ADDRESS`, `BLOCK_START`, and `BTC_BLOCK_START` in `.env`
+2. Wipe reservation/position data from the DB (blocks can be kept)
+3. Restart all services
+
+## Logs
+
+Runtime logs are written to `./data/app.log`. In production, PM2 per-process logs are at `/root/.pm2/logs/`.
+
+## Testing
+
+The live end-to-end test runs the full cross-chain flow against real testnets (Sepolia + LTC testnet via Tatum):
+
+```sh
+npx jest tests/live-e2e.test.ts --forceExit
+```
+
+Requires a funded LTC testnet UTXO. See the test file for required env vars (`TEST_EVM_PRIVATE_KEY`, `TEST_LTC_PRIVATE_KEY`, `TEST_LTC_UTXO_*`). Allow up to 2 hours — LTC testnet blocks are infrequent.
