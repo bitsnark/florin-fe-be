@@ -183,8 +183,8 @@ CREATE TABLE liteforge_swaps (
     l2_block_number INTEGER NOT NULL,
     user_address    VARCHAR NOT NULL,
     ltc_address     VARCHAR NOT NULL,
-    amount          NUMERIC NOT NULL,
-    message_num     NUMERIC NOT NULL,
+    amount          VARCHAR NOT NULL,
+    message_num     VARCHAR NOT NULL,
     state           VARCHAR NOT NULL DEFAULT 'pending',
     PRIMARY KEY (l2_tx_hash, l2_block_hash)
 );
