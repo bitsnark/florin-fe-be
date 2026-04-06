@@ -1,4 +1,5 @@
 -- Drop existing tables if they exist (order matters due to foreign keys)
+DROP TABLE IF EXISTS liteforge_swaps;
 DROP TABLE IF EXISTS liteforge_bridge_events;
 DROP TABLE IF EXISTS liteforge_reserved_events;
 DROP TABLE IF EXISTS reservation_state_events;
@@ -172,4 +173,23 @@ CREATE TABLE IF NOT EXISTS liteforge_reserved_events (
 
 CREATE INDEX IF NOT EXISTS liteforge_reserved_events_l2_recipient ON liteforge_reserved_events(l2_recipient);
 CREATE INDEX IF NOT EXISTS liteforge_reserved_events_reservation_id ON liteforge_reserved_events(reservation_id);
+
+-- ============================
+-- Table for LiteforgeSwap events (Liteforge L2 → LTC direction)
+-- ============================
+CREATE TABLE liteforge_swaps (
+    l2_tx_hash      VARCHAR NOT NULL,
+    l2_block_hash   VARCHAR NOT NULL,
+    l2_block_number INTEGER NOT NULL,
+    user_address    VARCHAR NOT NULL,
+    ltc_address     VARCHAR NOT NULL,
+    amount          NUMERIC NOT NULL,
+    message_num     NUMERIC NOT NULL,
+    state           VARCHAR NOT NULL DEFAULT 'pending',
+    PRIMARY KEY (l2_tx_hash, l2_block_hash)
+);
+
+CREATE INDEX IF NOT EXISTS idx_liteforge_swaps_user_address ON liteforge_swaps(user_address);
+CREATE INDEX IF NOT EXISTS idx_liteforge_swaps_l2_tx_hash ON liteforge_swaps(l2_tx_hash);
+CREATE INDEX IF NOT EXISTS idx_liteforge_swaps_l2_block_number ON liteforge_swaps(l2_block_number);
 

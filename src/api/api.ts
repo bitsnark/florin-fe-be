@@ -74,6 +74,7 @@
 import { MaterializedPosition } from '../db/materlialized-position';
 import { MaterializedReservation } from '../db/materialized-reservation';
 import { MaterializedHistory } from '../db/materialized-history';
+import { LiteforgeSwapDb } from '../db/liteforge-swap-db';
 import { Express } from 'express';
 import { jsonStringifyCustom } from '../common/json';
 import { BitcoinNode } from '../btc-listener/bitcoin-node';
@@ -87,6 +88,7 @@ export function setApi(app: Express) {
     const materializedPosition = new MaterializedPosition();
     const materializedReservation = new MaterializedReservation();
     const materializedHistory = new MaterializedHistory();
+    const liteforgeSwapDb = new LiteforgeSwapDb();
     const btcNode = new BitcoinNode();
 
     // sanity
@@ -162,6 +164,25 @@ export function setApi(app: Express) {
         } catch (e) {
             console.error(e);
             logger.error(`GET /btcBlockCount error:${e}`);
+            res.status(500).send('Internal Server Error');
+        }
+    });
+
+    app.get('/liteforge-swap/:txHash', async (req, res) => {
+        const { txHash } = req.params;
+        if (!txHash) {
+            res.status(400).send('txHash is required');
+            return;
+        }
+        try {
+            const swap = await liteforgeSwapDb.getByTxHash(txHash);
+            if (swap) {
+                res.send(jsonStringifyCustom(swap));
+            } else {
+                res.status(404).send('Swap not found');
+            }
+        } catch (error) {
+            logger.error(`GET /liteforge-swap/${txHash} error:${error}`);
             res.status(500).send('Internal Server Error');
         }
     });
