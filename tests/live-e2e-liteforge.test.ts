@@ -7,10 +7,9 @@
  *   3. florin-mm detects the finalized swap and sends LTC to the receive address
  *
  * Prerequisites:
- *   1. TEST_L2_PRIVATE_KEY  — Liteforge L2 wallet funded with native zkLTC (18 decimals)
- *   2. TEST_LITEFORGE_LTC_RECEIVE_ADDRESS — LTC testnet address to receive payment (tltc1q...)
- *   3. LITEFORGE_SWAP_ADDRESS — deployed LiteforgeSwap contract address on L2
- *   4. FLORIN_API_URL — florin-fe-be API (default: http://35.239.92.14)
+ *   1. TEST_EVM_PRIVATE_KEY  — single keypair for Sepolia, Liteforge L2, and LTC receive address
+ *   2. LITEFORGE_SWAP_ADDRESS — deployed LiteforgeSwap contract address on L2
+ *   3. FLORIN_API_URL — florin-fe-be API (default: http://35.239.92.14)
  *
  * Run with:
  *   npx jest tests/live-e2e-liteforge.test.ts --forceExit --verbose
@@ -21,7 +20,13 @@ dotenv.config({ path: ['.env'] });
 
 import { ethers } from 'ethers';
 import { bech32, bech32m } from 'bech32';
+import * as bitcoin from 'bitcoinjs-lib';
+import * as ecc from 'tiny-secp256k1';
+import ECPairFactory from 'ecpair';
 import axios from 'axios';
+
+bitcoin.initEccLib(ecc);
+const ECPair = ECPairFactory(ecc);
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -31,8 +36,17 @@ const TATUM_URL            = process.env.BTC_NODE_HOST            || 'https://li
 const TATUM_KEY            = process.env.BTC_NODE_PASSWORD;
 const FLORIN_API           = process.env.FLORIN_API_URL           || 'http://35.239.92.14';
 
-const TEST_L2_PRIVATE_KEY             = process.env.TEST_L2_PRIVATE_KEY;
-const TEST_LITEFORGE_LTC_RECEIVE_ADDRESS = process.env.TEST_LITEFORGE_LTC_RECEIVE_ADDRESS;
+const TEST_EVM_PRIVATE_KEY = process.env.TEST_EVM_PRIVATE_KEY;
+
+// LTC testnet network params
+const LTC_TESTNET: bitcoin.networks.Network = {
+    messagePrefix: '\x19Litecoin Signed Message:\n',
+    bech32: 'tltc',
+    bip32:  { public: 0x043587CF, private: 0x04358394 },
+    pubKeyHash: 0x6f,
+    scriptHash: 0x3a,
+    wif: 0xef,
+};
 
 // Amount to swap: 20 000 sats worth = 20 000 × 10^10 = 2×10^14 wei (18-decimal zkLTC)
 const SWAP_SATS   = 20_000n;
@@ -158,10 +172,8 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
     it('user swaps on L2, florin-mm sends LTC to receive address', async () => {
 
         // ── 0. Guard rails ─────────────────────────────────────────────────
-        if (!TEST_L2_PRIVATE_KEY)
-            throw new Error('Set TEST_L2_PRIVATE_KEY in .env (Liteforge L2 wallet with native zkLTC)');
-        if (!TEST_LITEFORGE_LTC_RECEIVE_ADDRESS)
-            throw new Error('Set TEST_LITEFORGE_LTC_RECEIVE_ADDRESS in .env (LTC testnet address)');
+        if (!TEST_EVM_PRIVATE_KEY)
+            throw new Error('Set TEST_EVM_PRIVATE_KEY in .env (single keypair for L2, Sepolia, and LTC)');
         if (!LITEFORGE_SWAP_ADDR)
             throw new Error('Set LITEFORGE_SWAP_ADDRESS in .env (deployed LiteforgeSwap contract)');
 
@@ -169,7 +181,13 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
         progress('=== STEP 1: Setup ===');
 
         const l2Provider = new ethers.JsonRpcProvider(L2_RPC_URL);
-        const l2Wallet   = new ethers.Wallet(TEST_L2_PRIVATE_KEY, l2Provider);
+        const l2Wallet   = new ethers.Wallet(TEST_EVM_PRIVATE_KEY, l2Provider);
+
+        // Derive LTC P2WPKH receive address from the same private key
+        const privKeyHex     = TEST_EVM_PRIVATE_KEY.replace(/^0x/, '');
+        const ltcKeyPair     = ECPair.fromPrivateKey(Buffer.from(privKeyHex, 'hex'), { network: LTC_TESTNET });
+        const ltcP2wpkh      = bitcoin.payments.p2wpkh({ pubkey: Buffer.from(ltcKeyPair.publicKey), network: LTC_TESTNET });
+        const ltcReceiveAddress = ltcP2wpkh.address!;
 
         const l2Balance  = await l2Provider.getBalance(l2Wallet.address);
         const ltcBlock   = await ltcRpc('getblockcount') as number;
@@ -177,7 +195,7 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
         progress(`L2 RPC:            ${L2_RPC_URL}`);
         progress(`L2 wallet:         ${l2Wallet.address}`);
         progress(`L2 balance:        ${ethers.formatEther(l2Balance)} zkLTC`);
-        progress(`LTC receive addr:  ${TEST_LITEFORGE_LTC_RECEIVE_ADDRESS}`);
+        progress(`LTC receive addr:  ${ltcReceiveAddress} (P2WPKH, derived from same key)`);
         progress(`LTC tip:           block ${ltcBlock}`);
         progress(`Florin API:        ${FLORIN_API}`);
         progress(`LiteforgeSwap:     ${LITEFORGE_SWAP_ADDR}`);
@@ -192,14 +210,14 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
 
         // Record LTC balance before the test so we can detect the incoming payment
         progress('\nRecording initial LTC balance at receive address…');
-        const initialLtcSats = await getLtcAddressBalanceSats(TEST_LITEFORGE_LTC_RECEIVE_ADDRESS);
+        const initialLtcSats = await getLtcAddressBalanceSats(ltcReceiveAddress);
         progress(`Initial LTC balance: ${initialLtcSats} sats`);
 
         // ── 2. Encode LTC address as bytes32 ──────────────────────────────
         progress('\n=== STEP 2: Encode LTC receive address as bytes32 ===');
 
-        const ltcAddressBytes32 = ltcAddressToBytes32(TEST_LITEFORGE_LTC_RECEIVE_ADDRESS);
-        progress(`LTC address:  ${TEST_LITEFORGE_LTC_RECEIVE_ADDRESS}`);
+        const ltcAddressBytes32 = ltcAddressToBytes32(ltcReceiveAddress);
+        progress(`LTC address:  ${ltcReceiveAddress}`);
         progress(`As bytes32:   ${ltcAddressBytes32}`);
 
         // ── 3. Call LiteforgeSwap.swap() on L2 ───────────────────────────
@@ -266,13 +284,13 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
 
         // ── 5. Wait for florin-mm to send LTC ────────────────────────────
         progress('\n=== STEP 5: Waiting for florin-mm to send LTC ===');
-        progress(`Polling LTC balance at ${TEST_LITEFORGE_LTC_RECEIVE_ADDRESS} every ${POLL_MS / 1000}s…`);
+        progress(`Polling LTC balance at ${ltcReceiveAddress} every ${POLL_MS / 1000}s…`);
         progress(`(florin-mm sends LTC once the L2 swap block reaches finality)`);
         progress(`Initial balance: ${initialLtcSats} sats — waiting for it to increase…`);
 
         const finalLtcSats = await pollUntil(
             'LTC received',
-            () => getLtcAddressBalanceSats(TEST_LITEFORGE_LTC_RECEIVE_ADDRESS),
+            () => getLtcAddressBalanceSats(ltcReceiveAddress),
             sats => sats > initialLtcSats,
             (sats, attempt) => {
                 progress(`  [attempt ${attempt}] LTC balance: ${sats} sats (waiting for > ${initialLtcSats})`);
@@ -296,7 +314,7 @@ describe('Live E2E: Liteforge L2 → LTC flow', () => {
         progress(`  L2 tx hash:      ${l2TxHash}`);
         progress(`  L2 block:        ${swapReceipt.blockNumber}`);
         progress(`  messageNum:      ${messageNum}`);
-        progress(`  LTC received:    ${receivedSats} sats at ${TEST_LITEFORGE_LTC_RECEIVE_ADDRESS}`);
+        progress(`  LTC received:    ${receivedSats} sats at ${ltcReceiveAddress}`);
 
     }, TOTAL_TIMEOUT);
 
