@@ -48,9 +48,7 @@ export class BlockScanner {
                     logger.error(`fe-be Block at height ${blockNumber} not found`);
                     throw new Error(`fe-be Block at height ${blockNumber} not found`);
                 }
-                for (const log of blockLogs) {
-                    await this.eventWriter.parseEvent(blockNumber, evmBlock.hash, log.txhash, log, log.txFrom);
-                }
+                // Write block first so event foreign key constraints are satisfied
                 await this.blockDb.create({
                     blockHash: evmBlock.hash,
                     chainId: config.chainId,
@@ -58,6 +56,9 @@ export class BlockScanner {
                     finality: blockNumber < firstUnknown ? Finality.FINAL : Finality.UNKNOWN,
                     blockTimestamp: BigInt(evmBlock.timestamp)
                 });
+                for (const log of blockLogs) {
+                    await this.eventWriter.parseEvent(blockNumber, evmBlock.hash, log.txhash, log, log.txFrom);
+                }
             }
 
             // Store batch-end block as progress marker if not already stored as an event block
