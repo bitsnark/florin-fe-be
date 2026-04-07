@@ -76,6 +76,20 @@ sudo tail -30 /root/.pm2/logs/api-out.log
 
 - Never trust log lines from before the current deployment's timestamp.
 
+## Running E2E Tests
+
+**ALWAYS run e2e tests on the server, never locally.**
+
+The tests require access to the florin API at `http://localhost`, the LTC node, and the Sepolia RPC — all of which are configured in the server's `.env`. Running locally will fail because `http://localhost` won't resolve to the server API.
+
+To run a test on the server:
+
+```sh
+ssh -i ~/.ssh/google_compute_engine gadzooks@35.239.92.14 'sudo -u gadiguy bash -c "cd ~/florin-fe-be && npx jest tests/live-e2e.test.ts --forceExit --verbose" 2>&1'
+```
+
+Before running, ensure the server's `.env` has up-to-date `TEST_*` vars (sync via scp as per Deployment Rules §1).
+
 ## Deployment Checklist
 
 Before completing any task, verify:

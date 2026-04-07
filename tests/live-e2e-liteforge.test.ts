@@ -1,10 +1,11 @@
 /**
- * Live end-to-end test for the Liteforge L2 → LTC flow.
+ * Live end-to-end test for the L2 (Liteforge) → Sepolia → LTC flow.
  *
  * Flow:
- *   1. Call LiteforgeSwap.swap(ltcAddress) on Liteforge L2 with native zkLTC
- *   2. florin-fe-be liteforge-scanner indexes the SwapInitiated event
- *   3. florin-mm detects the finalized swap and sends LTC to the receive address
+ *   1. User calls LiteforgeSwap.swap(ltcAddress) on Liteforge L2 with native zkLTC
+ *   2. LiteforgeSwap bridges tokens through Sepolia (via Arbitrum native bridge)
+ *   3. florin-fe-be liteforge-scanner indexes the SwapInitiated event
+ *   4. florin-mm detects the finalized L2 swap and sends LTC to the receive address
  *
  * Prerequisites:
  *   1. TEST_EVM_PRIVATE_KEY  — single keypair for Sepolia, Liteforge L2, and LTC receive address
@@ -205,9 +206,9 @@ async function getLiteforgeSwap(txHash: string): Promise<Record<string, unknown>
 
 // ─── Test ─────────────────────────────────────────────────────────────────────
 
-describe('Live E2E: Liteforge L2 → LTC flow', () => {
+describe('Live E2E: L2 (Liteforge) → Sepolia → LTC flow', () => {
 
-    it('user swaps on L2, florin-mm sends LTC to receive address', async () => {
+    it('user swaps on L2, tokens bridge through Sepolia, florin-mm sends LTC to receive address', async () => {
 
         // ── 0. Guard rails ─────────────────────────────────────────────────
         if (!TEST_EVM_PRIVATE_KEY)
