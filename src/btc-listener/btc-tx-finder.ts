@@ -6,6 +6,7 @@ import { BtcTxDb } from "../db/btc-tx-db";
 import { btcToSatoshi } from "../common/btc-utils";
 import { config } from "../common/config";
 import { logger } from "../common/logger";
+import { LiteforgeSwapDb } from "../db/liteforge-swap-db";
 
 
 export interface UnfulfilledReservation {
@@ -31,11 +32,13 @@ export class BitcoinTxFinder {
 	bitcoinRPC!: BitcoinNode;
 	eventsDb: MaterializedReservation;
 	btcDB: BtcTxDb;
+	liteforgeSwapDb: LiteforgeSwapDb;
 
 	constructor() {
 		this.eventsDb = new MaterializedReservation();
 		this.bitcoinRPC = new BitcoinNode();
 		this.btcDB = new BtcTxDb();
+		this.liteforgeSwapDb = new LiteforgeSwapDb();
 	}
 
 
@@ -55,28 +58,39 @@ export class BitcoinTxFinder {
 
 	async scanBlock(blockHeight: number, blockHash: string): Promise<void> {
 		const reservations = await this.getPendingReservations();
-		if (reservations.byInscription.size === 0 && reservations.byAddress.size === 0) return;
-		logger.info(`BitcoinTxFinder scanBlock: ${blockHeight} byInscription:${reservations.byInscription.size} byAddress:${reservations.byAddress.size} `);
+		const swapScripts = await this.liteforgeSwapDb.getPendingSwapScripts();
+
+		if (reservations.byInscription.size === 0 && reservations.byAddress.size === 0 && swapScripts.size === 0) return;
+		logger.info(`BitcoinTxFinder scanBlock: ${blockHeight} byInscription:${reservations.byInscription.size} byAddress:${reservations.byAddress.size} swaps:${swapScripts.size}`);
 
 		const block = await this.bitcoinRPC.getBlock(blockHash, BlockVerbosity.jsonWithTxs);
 
 		for (const tx of block.tx) {
+			// Check reservations
 			const res = this.findTxReservation(tx.vout, reservations)
-			if (!res) continue;
+			if (res) {
+				logger.info(`Found reservation payment transaction for reservationId: ${res.reservationId} txid: ${tx.txid} blockHeight${blockHeight}`);
 
-			logger.info(`Found reservation payment transaction for reservationId: ${res.reservationId} txid: ${tx.txid} blockHeight${blockHeight}`);
+				await this.btcDB.insertTx({
+					txid: tx.txid,
+					blockHash: blockHash,
+					blockHeight: blockHeight,
+					targetChainId: config.chainId,
+					reservationId: res.reservationId,
+					positionId: res.positionId,
+					amount: btcToSatoshi(tx.vout[res.voutIndex].value),
+				})
+			}
 
-			await this.btcDB.insertTx({
-				txid: tx.txid,
-				blockHash: blockHash,
-				blockHeight: blockHeight,
-				targetChainId: config.chainId,
-				reservationId: res.reservationId,
-				positionId: res.positionId,
-				amount: btcToSatoshi(tx.vout[res.voutIndex].value),
-			})
-
-
+			// Check liteforge swaps (L2→LTC: detect LTC arrival)
+			for (const vout of tx.vout) {
+				const l2TxHash = swapScripts.get(vout.scriptPubKey.hex);
+				if (l2TxHash) {
+					logger.info(`Found liteforge swap LTC payment: l2TxHash=${l2TxHash} ltcTxid=${tx.txid} blockHeight=${blockHeight}`);
+					await this.liteforgeSwapDb.updateState(l2TxHash, 'completed');
+					swapScripts.delete(vout.scriptPubKey.hex);
+				}
+			}
 		}
 	}
 

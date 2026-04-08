@@ -30,6 +30,41 @@ export class LiteforgeSwapDb extends Db {
         ]);
     }
 
+    /**
+     * Convert a bytes32-encoded LTC address to its scriptPubKey hex.
+     * P2WPKH (20-byte program, leading zeros): 0014 + last 20 bytes
+     * P2TR   (32-byte program, no leading zeros): 5120 + 32 bytes
+     */
+    private bytes32ToScriptPubKeyHex(bytes32: string): string {
+        const hex = bytes32.startsWith('0x') ? bytes32.slice(2) : bytes32;
+        const trimmed = hex.replace(/^0+/, '');
+        if (trimmed.length <= 40) {
+            // P2WPKH: 20-byte witness program
+            return '0014' + hex.slice(-40);
+        }
+        // P2TR: 32-byte witness program
+        return '5120' + hex;
+    }
+
+    async getPendingSwapScripts(): Promise<Map<string, string>> {
+        const result = await this.query(`
+            SELECT l2_tx_hash, ltc_address FROM liteforge_swaps
+            WHERE state = 'ltc_sent'
+        `, []);
+        const map = new Map<string, string>();
+        for (const row of result.rows) {
+            const script = this.bytes32ToScriptPubKeyHex(row.ltc_address);
+            map.set(script, row.l2_tx_hash);
+        }
+        return map;
+    }
+
+    async updateState(l2TxHash: string, state: string): Promise<void> {
+        await this.query(`
+            UPDATE liteforge_swaps SET state = $1 WHERE l2_tx_hash = $2
+        `, [state, l2TxHash]);
+    }
+
     async getByTxHash(txHash: string): Promise<LiteforgeSwap | null> {
         const result = await this.query(`
             SELECT * FROM liteforge_swaps
