@@ -49,7 +49,7 @@ export class LiteforgeSwapDb extends Db {
     async getPendingSwapScripts(): Promise<Map<string, string>> {
         const result = await this.query(`
             SELECT l2_tx_hash, ltc_address FROM liteforge_swaps
-            WHERE state = 'ltc_sent'
+            WHERE state <> 'completed'
         `, []);
         const map = new Map<string, string>();
         for (const row of result.rows) {
