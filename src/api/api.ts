@@ -75,6 +75,7 @@ import { MaterializedPosition } from '../db/materlialized-position';
 import { MaterializedReservation } from '../db/materialized-reservation';
 import { MaterializedHistory } from '../db/materialized-history';
 import { LiteforgeSwapDb } from '../db/liteforge-swap-db';
+import { UserTransactionDb } from '../db/user-transaction-db';
 import { Express } from 'express';
 import { jsonStringifyCustom } from '../common/json';
 import { BitcoinNode } from '../btc-listener/bitcoin-node';
@@ -89,6 +90,7 @@ export function setApi(app: Express) {
     const materializedReservation = new MaterializedReservation();
     const materializedHistory = new MaterializedHistory();
     const liteforgeSwapDb = new LiteforgeSwapDb();
+    const userTransactionDb = new UserTransactionDb();
     const btcNode = new BitcoinNode();
 
     // sanity
@@ -183,6 +185,21 @@ export function setApi(app: Express) {
             }
         } catch (error) {
             logger.error(`GET /liteforge-swap/${txHash} error:${error}`);
+            res.status(500).send('Internal Server Error');
+        }
+    });
+
+    app.post('/transaction', async (req, res) => {
+        const { txHash, userAddress, type, chainId } = req.body;
+        if (!txHash || !userAddress || !type || chainId === undefined) {
+            res.status(400).send('txHash, userAddress, type, and chainId are required');
+            return;
+        }
+        try {
+            await userTransactionDb.insert(txHash, userAddress, type, chainId);
+            res.status(201).send('OK');
+        } catch (error) {
+            logger.error(`POST /transaction error: ${error}`);
             res.status(500).send('Internal Server Error');
         }
     });

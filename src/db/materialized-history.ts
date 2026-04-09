@@ -7,6 +7,7 @@ import { Db } from "./db";
 
 
 export interface HistoryRecord {
+    transactionType?: string;
     positionId?: string;
     reservationId?: string;
     amount?: string;
@@ -54,10 +55,24 @@ export class MaterializedHistory extends Db {
     }
 
     async getOwnerHistory(address: string, finalityFlag?: boolean, limit: number = 100): Promise<HistoryRecord[]> {
-        const positions = await this.getOwnerPositionHistory(address, finalityFlag, limit);
-        const reservations = await this.getOwnerReservationHistory(address, finalityFlag, limit);
+        const [positions, reservations, swaps, userTxs] = await Promise.all([
+            this.getOwnerPositionHistory(address, finalityFlag, limit),
+            this.getOwnerReservationHistory(address, finalityFlag, limit),
+            this.getOwnerLiteforgeSwaps(address, limit),
+            this.getUnindexedUserTransactions(address),
+        ]);
 
-        return [...positions, ...reservations];
+        positions.forEach(p => p.transactionType = 'position');
+        reservations.forEach(r => r.transactionType = 'reservation');
+
+        const indexedHashes = new Set([
+            ...positions.map(p => p.registrationTxhash?.toLowerCase()),
+            ...reservations.map(r => r.registrationTxhash?.toLowerCase()),
+            ...swaps.map(s => s.registrationTxhash?.toLowerCase()),
+        ]);
+        const pending = userTxs.filter(ut => !indexedHashes.has(ut.registrationTxhash?.toLowerCase()));
+
+        return [...positions, ...reservations, ...swaps, ...pending];
     }
 
     //----------------------------------------------------------------------------------------
@@ -264,5 +279,54 @@ export class MaterializedHistory extends Db {
         return mapRowsToHistoryRecords(result.rows);
     }
 
+    //----------------------------------------------------------------------------------------
+    // Liteforge swaps (L2 → LTC)
+    protected async getOwnerLiteforgeSwaps(address: string, limit: number = 100): Promise<HistoryRecord[]> {
+        const query = `
+        SELECT DISTINCT ON (ls.l2_tx_hash)
+            ls.l2_tx_hash as registration_txhash,
+            ls.user_address as owner_address,
+            ls.l2_block_number as registration_block_number,
+            ls.l2_block_hash as registration_block_hash,
+            ls.ltc_address as bitcoin_address,
+            ls.amount,
+            b.block_timestamp,
+            b.finality as registration_finality,
+            CASE ls.state WHEN 'completed' THEN '4' ELSE '1' END as state
+        FROM liteforge_swaps ls
+        LEFT JOIN blocks b ON ls.l2_block_hash = b.block_hash
+        WHERE ls.user_address = lower($1)
+        ORDER BY ls.l2_tx_hash, ls.l2_block_number DESC
+        LIMIT $2
+        `;
+        const result = await this.query(query, [address, limit]);
+        if (result.rows.length < 1) return [];
+        const records = mapRowsToHistoryRecords(result.rows);
+        return records.map(r => ({
+            ...r,
+            transactionType: 'liteforge_swap',
+            registrationChain: config.liteforgeL2ChainId,
+        }));
+    }
+
+    //----------------------------------------------------------------------------------------
+    // Unindexed user-reported transactions (placeholders until scanners pick them up)
+    protected async getUnindexedUserTransactions(address: string): Promise<HistoryRecord[]> {
+        const query = `
+        SELECT tx_hash, user_address, type, chain_id, created_at
+        FROM user_transactions
+        WHERE user_address = lower($1)
+        `;
+        const result = await this.query(query, [address]);
+        if (result.rows.length < 1) return [];
+        return result.rows.map(row => ({
+            transactionType: row.type,
+            registrationTxhash: row.tx_hash,
+            ownerAddress: row.user_address,
+            registrationChain: Number(row.chain_id),
+            state: '1',
+            registrationTimestamp: String(Math.floor(new Date(row.created_at).getTime() / 1000)),
+        }));
+    }
 
 }

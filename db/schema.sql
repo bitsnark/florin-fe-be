@@ -193,3 +193,11 @@ CREATE INDEX IF NOT EXISTS idx_liteforge_swaps_user_address ON liteforge_swaps(u
 CREATE INDEX IF NOT EXISTS idx_liteforge_swaps_l2_tx_hash ON liteforge_swaps(l2_tx_hash);
 CREATE INDEX IF NOT EXISTS idx_liteforge_swaps_l2_block_number ON liteforge_swaps(l2_block_number);
 
+CREATE TABLE IF NOT EXISTS user_transactions (
+    tx_hash       VARCHAR PRIMARY KEY,
+    user_address  VARCHAR NOT NULL,
+    type          VARCHAR NOT NULL,
+    chain_id      INTEGER NOT NULL,
+    created_at    TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_user_transactions_user ON user_transactions (user_address);
